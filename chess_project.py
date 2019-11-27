@@ -1,34 +1,32 @@
-# -*- coding: utf-8 -*-
 """
 Created on Fri Nov 30 19:02:32 2018
 
 @author: danielb
 """
 
-#Package imports
 from tkinter import Tk, Label, Button, Frame
 import logging
 from helpful_dictionaries import piece_names, text_color
 from helpful_functions import index_to_letter, letter_to_index
 
-#Back End
 
-#Class definitions
 class ChessPiece():
     """Class for the individual chess pieces"""
     def __init__(self, color):
         self.color = color
         self.has_been_moved = False
-        
+
     def potential_moves(self, current_position):
-        pass    
-    
+        """Virual method for finding potential chess piece moves. Implemented
+        by each child class"""
+        pass
+
 class Bishop(ChessPiece):
     """Child class for the Bishop"""
     piece_type = "B"
     def __init__(self, color):
         super().__init__(color)
-        
+
     def potential_moves(self, current_position):
         """Returns all potential moves and captures for a bishop"""
         current_row = int(current_position[0])
@@ -38,7 +36,7 @@ class Bishop(ChessPiece):
         positive_steps = [1, 2, 3, 4, 5, 6, 7]
         possible_moves = []
         possible_captures = []
-        #Diagonal down and left
+        # Diagonal down and left
         for i in negative_steps:
             adjusted_column = index_to_letter(current_column + i)
             adjusted_row = current_row + i
@@ -50,7 +48,7 @@ class Bishop(ChessPiece):
                     if squares[possible_move].color != piece_color:
                         possible_captures.append(possible_move)
                     break
-        #Diagonal down and right
+        # Diagonal down and right
         for i in negative_steps:
             adjusted_column = index_to_letter(current_column + i)
             adjusted_row = current_row - i
@@ -62,7 +60,7 @@ class Bishop(ChessPiece):
                     if squares[possible_move].color != piece_color:
                         possible_captures.append(possible_move)
                     break
-        #Diagonal up and right
+        # Diagonal up and right
         for i in positive_steps:
             adjusted_column = index_to_letter(current_column + i)
             adjusted_row = current_row + i
@@ -74,7 +72,7 @@ class Bishop(ChessPiece):
                     if squares[possible_move].color != piece_color:
                         possible_captures.append(possible_move)
                     break
-        #Diagonal up and left
+        # Diagonal up and left
         for i in positive_steps:
             adjusted_column = index_to_letter(current_column + i)
             adjusted_row = current_row - i
@@ -87,13 +85,13 @@ class Bishop(ChessPiece):
                         possible_captures.append(possible_move)
                     break
         return(possible_moves, possible_captures)
-        
+
 class King(ChessPiece):
     """Child class for the King"""
-    piece_type = "K" #Note, upper case 'K' for King
+    piece_type = "K" # Note, upper case 'K' for King
     def __init__(self, color):
         super().__init__(color)
-        
+
     def potential_moves(self, current_position):
         """Returns all potential moves, special moves, and potential captures
         for a king"""
@@ -115,16 +113,16 @@ class King(ChessPiece):
                     elif squares[possible_move]:
                         if squares[possible_move].color != piece_color:
                             possible_captures.append(possible_move)
-                            
-        #Check for possible castle move
-        if squares[current_position].has_been_moved == False:
-            #Check the white pieces
+
+        # Check for possible castle move
+        if not squares[current_position].has_been_moved:
+            # Check the white pieces
             if squares[current_position].color == "White":
-                #Check for king side castle first
+                # Check for king side castle first
                 in_between_positions = []
                 rook_position = "1h"
                 if squares[rook_position]:
-                    if squares[rook_position].has_been_moved == False:
+                    if not squares[rook_position].has_been_moved:
                         for i in 1, 2:
                             check_column = index_to_letter(current_column + i)
                             check_position = str(current_row) + check_column
@@ -132,15 +130,15 @@ class King(ChessPiece):
                                 in_between_positions.append(True)
                             else:
                                 in_between_positions.append(False)
-                    if all(check == False for check in in_between_positions):
+                    if all(not check for check in in_between_positions):
                         possible_move = str(current_row) + \
                         index_to_letter(current_column + 2)
                         possible_special_moves.append(possible_move)
-                #Now check for queen side castle
+                # Now check for queen side castle
                 in_between_positions = []
                 rook_position = "1a"
                 if squares[rook_position]:
-                    if squares[rook_position].has_been_moved == False:
+                    if not squares[rook_position].has_been_moved:
                         for i in 1, 2, 3:
                             check_column = index_to_letter(current_column - i)
                             check_position = str(current_row) + check_column
@@ -148,17 +146,17 @@ class King(ChessPiece):
                                 in_between_positions.append(True)
                             else:
                                 in_between_positions.append(False)
-                    if all(check == False for check in in_between_positions):
+                    if all(not check for check in in_between_positions):
                         possible_move = str(current_row) + \
                         index_to_letter(current_column - 2)
                         possible_special_moves.append(possible_move)
-            #Check the black pieces
+            # Check the black pieces
             if squares[current_position].color == "Black":
-                #Check for king side castle first
+                # Check for king side castle first
                 in_between_positions = []
                 rook_position = "8h"
                 if squares[rook_position]:
-                    if squares[rook_position].has_been_moved == False:
+                    if not squares[rook_position].has_been_moved:
                         for i in 1, 2:
                             check_column = index_to_letter(current_column + i)
                             check_position = str(current_row) + check_column
@@ -166,15 +164,15 @@ class King(ChessPiece):
                                 in_between_positions.append(True)
                             else:
                                 in_between_positions.append(False)
-                    if all(check == False for check in in_between_positions):
+                    if all(not check for check in in_between_positions):
                         possible_move = str(current_row) + \
                         index_to_letter(current_column + 2)
                         possible_special_moves.append(possible_move)
-                #Now check for queen side castle
+                # Now check for queen side castle
                 in_between_positions = []
                 rook_position = "8a"
                 if squares[rook_position]:
-                    if squares[rook_position].has_been_moved == False:
+                    if not squares[rook_position].has_been_moved:
                         for i in 1, 2, 3:
                             check_column = index_to_letter(current_column - i)
                             check_position = str(current_row) + check_column
@@ -182,19 +180,19 @@ class King(ChessPiece):
                                 in_between_positions.append(True)
                             else:
                                 in_between_positions.append(False)
-                    if all(check == False for check in in_between_positions):
+                    if all(not check for check in in_between_positions):
                         possible_move = str(current_row) + \
                         index_to_letter(current_column - 2)
                         possible_special_moves.append(possible_move)
-                 
+
         return(possible_moves, possible_special_moves, possible_captures)
-        
+
 class Knight(ChessPiece):
     """Child class for the Knight"""
-    piece_type = "k" #Note, lower case 'k' for Knight
+    piece_type = "k" # Note, lower case 'k' for Knight
     def __init__(self, color):
         super().__init__(color)
-        
+
     def potential_moves(self, current_position):
         """Returns all potential moves and captures for a knight"""
         current_row = int(current_position[0])
@@ -216,13 +214,13 @@ class Knight(ChessPiece):
                             if squares[possible_move].color != piece_color:
                                 possible_captures.append(possible_move)
         return(possible_moves, possible_captures)
-        
+
 class Pawn(ChessPiece):
     """Child class for the Pawn"""
     piece_type = "P"
     def __init__(self, color):
         super().__init__(color)
-        
+
     def potential_moves(self, current_position):
         """Returns all potential moves, special moves, and potential captures
         for a pawn"""
@@ -239,9 +237,9 @@ class Pawn(ChessPiece):
         if adjusted_row in rows:
             possible_move = str(adjusted_row) + index_to_letter(current_column)
             if not squares[possible_move]:
-                possible_moves.append(possible_move)     
-        
-        #Check for possible captures separately
+                possible_moves.append(possible_move)
+
+        # Check for possible captures separately
         if piece_color == 'Black':
             adjusted_row = current_row - 1
         elif piece_color == 'White':
@@ -253,35 +251,35 @@ class Pawn(ChessPiece):
                     possible_capture = str(adjusted_row) + adjusted_column
                     if squares[possible_capture]:
                         if squares[possible_capture].color != piece_color:
-                           possible_captures.append(possible_capture)
-           
-        #Check if the pawn hasn't been moved yet and can skip a square              
-        if (piece_color == 'Black' and 
-            squares[current_position].has_been_moved == False):
+                            possible_captures.append(possible_capture)
+
+        # Check if the pawn hasn't been moved yet and can skip a square
+        if (piece_color == 'Black' and
+                not squares[current_position].has_been_moved):
             adjusted_row = current_row - 2
             check_row_in_front = current_row - 1
             possible_move = str(adjusted_row) + index_to_letter(current_column)
             check_square_in_front = str(check_row_in_front) + \
             index_to_letter(current_column)
-            if (not squares[check_square_in_front] and 
-                not squares[possible_move]):
+            if (not squares[check_square_in_front] and
+                    not squares[possible_move]):
                 possible_moves.append(possible_move)
-        elif (piece_color == 'White' and 
-              squares[current_position].has_been_moved == False):
+        elif (piece_color == 'White' and
+              not squares[current_position].has_been_moved):
             adjusted_row = current_row + 2
             check_row_in_front = current_row + 1
             possible_move = str(adjusted_row) + index_to_letter(current_column)
             check_square_in_front = str(check_row_in_front) + \
             index_to_letter(current_column)
-            if (not squares[check_square_in_front] and 
-                not squares[possible_move]):
+            if (not squares[check_square_in_front] and
+                    not squares[possible_move]):
                 possible_moves.append(possible_move)
-                
-        #Check for an En Passent
+
+        # Check for an En Passent
         if last_move_was_pawn_jump:
             required_column = last_move_was_pawn_jump[1]
-            logging.debug("The required column for the en passent is %s" % 
-                         (required_column))
+            logging.debug("The required column for the en passent is %s" %
+                          (required_column))
             if piece_color == BLACK and current_row == 4:
                 for i in -1, 1:
                     adjusted_column = index_to_letter(current_column + i)
@@ -294,7 +292,7 @@ class Pawn(ChessPiece):
                                     possible_capture_move = str(adjusted_row) \
                                     + adjusted_column
                                     possible_special_moves.append(
-                                            possible_capture_move)    
+                                        possible_capture_move)
             elif piece_color == WHITE and current_row == 5:
                 for i in -1, 1:
                     adjusted_column = index_to_letter(current_column + i)
@@ -307,15 +305,15 @@ class Pawn(ChessPiece):
                                     possible_capture_move = str(adjusted_row) \
                                     + adjusted_column
                                     possible_special_moves.append(
-                                            possible_capture_move)
+                                        possible_capture_move)
         return(possible_moves, possible_special_moves, possible_captures)
-        
+
 class Queen(ChessPiece):
     """Child class for the Queen"""
     piece_type = "Q"
     def __init__(self, color):
         super().__init__(color)
-        
+
     def potential_moves(self, current_position):
         """Returns all potential moves and captures for a queen"""
         current_row = int(current_position[0])
@@ -325,55 +323,55 @@ class Queen(ChessPiece):
         positive_steps = [1, 2, 3, 4, 5, 6, 7]
         possible_moves = []
         possible_captures = []
-        #Straight moves
-        #Left
+        # Straight moves
+        # Left
         for i in negative_steps:
-                adjusted_column = index_to_letter(current_column + i)
-                if adjusted_column in columns:
-                    possible_move = str(current_row) + adjusted_column
-                    if not squares[possible_move]:
-                        possible_moves.append(possible_move)
-                    elif squares[possible_move]:
-                        if squares[possible_move].color != piece_color:
-                            possible_captures.append(possible_move)
-                        break
-        #Right
+            adjusted_column = index_to_letter(current_column + i)
+            if adjusted_column in columns:
+                possible_move = str(current_row) + adjusted_column
+                if not squares[possible_move]:
+                    possible_moves.append(possible_move)
+                elif squares[possible_move]:
+                    if squares[possible_move].color != piece_color:
+                        possible_captures.append(possible_move)
+                    break
+        # Right
         for i in positive_steps:
-                adjusted_column = index_to_letter(current_column + i)
-                if adjusted_column in columns:
-                    possible_move = str(current_row) + adjusted_column
-                    if not squares[possible_move]:
-                        possible_moves.append(possible_move)
-                    elif squares[possible_move]:
-                        if squares[possible_move].color != piece_color:
-                            possible_captures.append(possible_move)
-                        break
-        #Down
+            adjusted_column = index_to_letter(current_column + i)
+            if adjusted_column in columns:
+                possible_move = str(current_row) + adjusted_column
+                if not squares[possible_move]:
+                    possible_moves.append(possible_move)
+                elif squares[possible_move]:
+                    if squares[possible_move].color != piece_color:
+                        possible_captures.append(possible_move)
+                    break
+        # Down
         for i in negative_steps:
-                adjusted_row = current_row + i
-                if adjusted_row in rows:
-                    possible_move = str(adjusted_row) + \
-                    index_to_letter(current_column)
-                    if not squares[possible_move]:
-                        possible_moves.append(possible_move)
-                    elif squares[possible_move]:
-                        if squares[possible_move].color != piece_color:
-                            possible_captures.append(possible_move)
-                        break
-        #Up
+            adjusted_row = current_row + i
+            if adjusted_row in rows:
+                possible_move = str(adjusted_row) + \
+                index_to_letter(current_column)
+                if not squares[possible_move]:
+                    possible_moves.append(possible_move)
+                elif squares[possible_move]:
+                    if squares[possible_move].color != piece_color:
+                        possible_captures.append(possible_move)
+                    break
+        # Up
         for i in positive_steps:
-                adjusted_row = current_row + i
-                if adjusted_row in rows:
-                    possible_move = str(adjusted_row) + \
-                    index_to_letter(current_column)
-                    if not squares[possible_move]:
-                        possible_moves.append(possible_move)
-                    elif squares[possible_move]:
-                        if squares[possible_move].color != piece_color:
-                            possible_captures.append(possible_move)
-                        break
-        #Diagonal moves
-        #Diagonal down and left
+            adjusted_row = current_row + i
+            if adjusted_row in rows:
+                possible_move = str(adjusted_row) + \
+                index_to_letter(current_column)
+                if not squares[possible_move]:
+                    possible_moves.append(possible_move)
+                elif squares[possible_move]:
+                    if squares[possible_move].color != piece_color:
+                        possible_captures.append(possible_move)
+                    break
+        # Diagonal moves
+        # Diagonal down and left
         for i in negative_steps:
             adjusted_column = index_to_letter(current_column + i)
             adjusted_row = current_row + i
@@ -385,7 +383,7 @@ class Queen(ChessPiece):
                     if squares[possible_move].color != piece_color:
                         possible_captures.append(possible_move)
                     break
-        #Diagonal down and right
+        # Diagonal down and right
         for i in negative_steps:
             adjusted_column = index_to_letter(current_column + i)
             adjusted_row = current_row - i
@@ -397,7 +395,7 @@ class Queen(ChessPiece):
                     if squares[possible_move].color != piece_color:
                         possible_captures.append(possible_move)
                     break
-        #Diagonal up and right
+        # Diagonal up and right
         for i in positive_steps:
             adjusted_column = index_to_letter(current_column + i)
             adjusted_row = current_row + i
@@ -409,7 +407,7 @@ class Queen(ChessPiece):
                     if squares[possible_move].color != piece_color:
                         possible_captures.append(possible_move)
                     break
-        #Diagonal up and left
+        # Diagonal up and left
         for i in positive_steps:
             adjusted_column = index_to_letter(current_column + i)
             adjusted_row = current_row - i
@@ -422,13 +420,13 @@ class Queen(ChessPiece):
                         possible_captures.append(possible_move)
                     break
         return(possible_moves, possible_captures)
-        
+
 class Rook(ChessPiece):
     """Child class for the Rook"""
     piece_type = "R"
     def __init__(self, color):
         super().__init__(color)
-        
+
     def potential_moves(self, current_position):
         """Returns all potential moves and captures for a rook"""
         current_row = int(current_position[0])
@@ -438,101 +436,101 @@ class Rook(ChessPiece):
         positive_steps = [1, 2, 3, 4, 5, 6, 7]
         possible_moves = []
         possible_captures = []
-        #Horizontal movements
-        #Left
+        # Horizontal movements
+        # Left
         for i in negative_steps:
-                adjusted_column = index_to_letter(current_column + i)
-                if adjusted_column in columns:
-                    possible_move = str(current_row) + adjusted_column
-                    if not squares[possible_move]:
-                        possible_moves.append(possible_move)
-                    elif squares[possible_move]:
-                        if squares[possible_move].color != piece_color:
-                            possible_captures.append(possible_move)
-                        break
-        #Right
+            adjusted_column = index_to_letter(current_column + i)
+            if adjusted_column in columns:
+                possible_move = str(current_row) + adjusted_column
+                if not squares[possible_move]:
+                    possible_moves.append(possible_move)
+                elif squares[possible_move]:
+                    if squares[possible_move].color != piece_color:
+                        possible_captures.append(possible_move)
+                    break
+        # Right
         for i in positive_steps:
-                adjusted_column = index_to_letter(current_column + i)
-                if adjusted_column in columns:
-                    possible_move = str(current_row) + adjusted_column
-                    if not squares[possible_move]:
-                        possible_moves.append(possible_move)
-                    elif squares[possible_move]:
-                        if squares[possible_move].color != piece_color:
-                            possible_captures.append(possible_move)
-                        break
-        #Vertical movements
-        #Down
+            adjusted_column = index_to_letter(current_column + i)
+            if adjusted_column in columns:
+                possible_move = str(current_row) + adjusted_column
+                if not squares[possible_move]:
+                    possible_moves.append(possible_move)
+                elif squares[possible_move]:
+                    if squares[possible_move].color != piece_color:
+                        possible_captures.append(possible_move)
+                    break
+        # Vertical movements
+        # Down
         for i in negative_steps:
-                adjusted_row = current_row + i
-                if adjusted_row in rows:
-                    possible_move = str(adjusted_row) + \
-                    index_to_letter(current_column)
-                    if not squares[possible_move]:
-                        possible_moves.append(possible_move)
-                    elif squares[possible_move]:
-                        if squares[possible_move].color != piece_color:
-                            possible_captures.append(possible_move)
-                        break
-        #Up
+            adjusted_row = current_row + i
+            if adjusted_row in rows:
+                possible_move = str(adjusted_row) + \
+                index_to_letter(current_column)
+                if not squares[possible_move]:
+                    possible_moves.append(possible_move)
+                elif squares[possible_move]:
+                    if squares[possible_move].color != piece_color:
+                        possible_captures.append(possible_move)
+                    break
+        # Up
         for i in positive_steps:
-                adjusted_row = current_row + i
-                if adjusted_row in rows:
-                    possible_move = str(adjusted_row) + \
-                    index_to_letter(current_column)
-                    if not squares[possible_move]:
-                        possible_moves.append(possible_move)
-                    elif squares[possible_move]:
-                        if squares[possible_move].color != piece_color:
-                            possible_captures.append(possible_move)
-                        break
+            adjusted_row = current_row + i
+            if adjusted_row in rows:
+                possible_move = str(adjusted_row) + \
+                index_to_letter(current_column)
+                if not squares[possible_move]:
+                    possible_moves.append(possible_move)
+                elif squares[possible_move]:
+                    if squares[possible_move].color != piece_color:
+                        possible_captures.append(possible_move)
+                    break
         return(possible_moves, possible_captures)
-    
+
 def move_piece(current_position, new_position):
     """Moves the chess piece to a new position and checks some conditions
     after the move"""
-    #First, make sure there's a piece at the current position
+    # First, make sure there's a piece at the current position
     try:
         assert squares[current_position], "There's no piece at that position"
     except AssertionError as error:
         logging.error(error)
         raise
-    
-    #Get possible moves and possible captures
+
+    # Get possible moves and possible captures
     [possible_moves, possible_special_moves, possible_captures] = \
     check_possible_moves(current_position)
-    
+
     piece_copy = squares[current_position].piece_type
     color_copy = squares[current_position].color
-    #Check if this is a capture
+    # Check if this is a capture
     if new_position in possible_captures:
-        #Check if the king is being captured
+        # Check if the king is being captured
         if squares[new_position].piece_type == KING:
-            #Change the flag to indicate the game is over
-            logging.info("The %s %s has just been captured. The game is over" % 
-                         (squares[new_position].color, 
+            # Change the flag to indicate the game is over
+            logging.info("The %s %s has just been captured. The game is over" %
+                         (squares[new_position].color,
                           piece_names[KING]))
             global game_over
             game_over = True
             squares[new_position] = None
         else:
-            #Remove the piece being captured
-            logging.info("The %s %s at position %s will be captured!" % 
-                         (squares[new_position].color, 
-                          piece_names[squares[new_position].piece_type], 
+            # Remove the piece being captured
+            logging.info("The %s %s at position %s will be captured!" %
+                         (squares[new_position].color,
+                          piece_names[squares[new_position].piece_type],
                           new_position))
             squares[new_position] = None
-    #Change the moving piece's location
+    # Change the moving piece's location
     logging.info("Moving the %s %s from %s to %s" %
-           (color_copy,
-            piece_names[piece_copy],
-            current_position,
-            new_position))
+                 (color_copy,
+                  piece_names[piece_copy],
+                  current_position,
+                  new_position))
     add_piece(piece_copy, color_copy, new_position)
-    #And remove the piece from its previous location
+    # And remove the piece from its previous location
     squares[current_position] = None
-        
-    #Check if the previous move deserves a promotion
+
+    # Check if the previous move deserves a promotion
     if squares[new_position].piece_type == PAWN:
         if squares[new_position].color == WHITE and new_position[0] == "8":
             logging.info("The %s %s at position %s is up for promotion" %
@@ -540,14 +538,14 @@ def move_piece(current_position, new_position):
             promotion(new_position)
         elif squares[new_position].color == BLACK and new_position[0] == "1":
             logging.info("The %s %s at position %s is up for promotion" %
-                         (BLACK, 
-                          piece_names[PAWN], 
+                         (BLACK,
+                          piece_names[PAWN],
                           new_position))
             promotion(new_position)
-    
-    #Check if the previous move was an En Passent or Castle
+
+    # Check if the previous move was an En Passent or Castle
     if new_position in possible_special_moves:
-        #If it was a En Passent then capture the appropriate pawn
+        # If it was a En Passent then capture the appropriate pawn
         if squares[new_position].piece_type == PAWN:
             if new_position not in possible_captures:
                 #Determine the position of the pawn being captured
@@ -559,8 +557,8 @@ def move_piece(current_position, new_position):
                     capture_row = new_row + 1
                 capture_position = str(capture_row) + capture_column
                 squares[capture_position] = None
-        
-        #If it was a Castle then move the appropriate rook
+
+        # If it was a Castle then move the appropriate rook
         if squares[new_position].piece_type == KING:
             #Figure out if the castle was a queen side or king side
             if new_position[1] == "c":
@@ -585,12 +583,12 @@ def move_piece(current_position, new_position):
                 rook_color_copy = squares[current_rook_position].color
                 squares[current_rook_position] = None
                 add_piece(rook_piece_copy, rook_color_copy, new_rook_position)
-    
-    #Set the last moved piece
+
+    # Set the last moved piece
     global last_moved_piece
     last_moved_piece = new_position
-    
-    #See if the move was a pawn jumping
+
+    # See if the move was a pawn jumping
     if squares[new_position].piece_type == PAWN:
         global last_move_was_pawn_jump
         if abs(int(current_position[0]) - int(new_position[0])) == 2:
@@ -599,22 +597,22 @@ def move_piece(current_position, new_position):
             last_move_was_pawn_jump = None
     else:
         last_move_was_pawn_jump = None
-    
-    #See if the piece has previously been moved and set flag
-    if squares[new_position].has_been_moved == False:
+
+    # See if the piece has previously been moved and set flag
+    if not squares[new_position].has_been_moved:
         squares[new_position].has_been_moved = True
-    
+
 def add_piece(piece_type, piece_color, position):
     """Creates the correct type of chess piece based on the inputs"""
-    #First, make sure the position is empty
+    # First, make sure the position is empty
     try:
         assert not squares[position], """There's already a piece at that
                                         position"""
     except AssertionError as error:
         logging.error(error)
         raise
-        
-    #Different piece types
+
+    # Different piece types
     if piece_type == BISHOP:
         squares[position] = Bishop(piece_color)
     elif piece_type == KING:
@@ -627,35 +625,35 @@ def add_piece(piece_type, piece_color, position):
         squares[position] = Queen(piece_color)
     elif piece_type == ROOK:
         squares[position] = Rook(piece_color)
-    
+
 def promotion_back_end(chosen_piece, piece_position):
-    """Completes the back end managing after a pawn promotion""" 
-    #First, make sure there's a piece at the position
+    """Completes the back end managing after a pawn promotion"""
+    # First, make sure there's a piece at the position
     try:
         assert squares[piece_position], "There's no piece at that position"
     except AssertionError as error:
         logging.error(error)
-        raise        
-    
-    #Then complete the promotion
+        raise
+
+    # Then complete the promotion
     logging.debug("Completing the final step of the pawn promotion")
     if squares[piece_position].piece_type == PAWN:
-        if (squares[piece_position].color == WHITE and 
-            piece_position[0] == '8'):
+        if (squares[piece_position].color == WHITE and
+                piece_position[0] == '8'):
             logging.info("Promotion the %s at position %s to a %s" %
-                        (piece_names[PAWN],
-                         piece_position,
-                         piece_names[chosen_piece]))
+                         (piece_names[PAWN],
+                          piece_position,
+                          piece_names[chosen_piece]))
             squares[piece_position] = None
             add_piece(chosen_piece, WHITE, piece_position)
-        elif (squares[piece_position].color == BLACK and 
+        elif (squares[piece_position].color == BLACK and
               piece_position[0] == '1'):
             logging.info("Promotion the %s at position %s to a %s" %
-                        (piece_names[PAWN],
-                         piece_position,
-                         piece_names[chosen_piece]))
+                         (piece_names[PAWN],
+                          piece_position,
+                          piece_names[chosen_piece]))
             squares[piece_position] = None
-            add_piece(chosen_piece, BLACK, piece_position)            
+            add_piece(chosen_piece, BLACK, piece_position)
     else:
         print("Too late for promotion, another move has already happened")
 
@@ -663,8 +661,8 @@ def check_for_check():
     """Determines if the player is currently in check"""
     logging.debug("Determing if the player is in check")
     for position in squares:
-        #Go through all the opponents pieces and see if they could 
-        #capture the king
+        # Go through all the opponents pieces and see if they could
+        # capture the king
         if squares[position] and squares[position].color != turn_color:
             [possibles_moves, possible_special_moves, possible_captures] = \
             check_possible_moves(position)
@@ -675,19 +673,19 @@ def check_for_check():
                                   piece_names[KING],
                                   capture))
                     return True
-              
-#Determines the piece type and calls the correct potential move function
-def check_possible_moves(current_position):     
-    """Checks possible moves based on the piece located at the 
+
+# Determines the piece type and calls the correct potential move function
+def check_possible_moves(current_position):
+    """Checks possible moves based on the piece located at the
     passed position"""
-    #First, make sure there's a piece at the passed position
+    # First, make sure there's a piece at the passed position
     try:
         assert squares[current_position], "There's no piece at that position"
     except AssertionError as error:
         logging.error(error)
         raise
-        
-    #Then, get the possible moves
+
+    # Then, get the possible moves
     logging.debug("Returning possible moves and captures")
     piece = squares[current_position].piece_type
     possible_moves = []
@@ -699,7 +697,7 @@ def check_possible_moves(current_position):
     elif piece == BISHOP or piece == KNIGHT or piece == QUEEN or piece == ROOK:
         [possible_moves, possible_captures] = \
         squares[current_position].potential_moves(current_position)
-        
+
     moves_str = " ".join(possible_moves) + " ".join(possible_special_moves)
     captures_str = " ".join(possible_captures)
     logging.info("The possible moves for the %s %s at position %s are: %s" %
@@ -711,88 +709,84 @@ def check_possible_moves(current_position):
                  (squares[current_position].color,
                   piece_names[squares[current_position].piece_type],
                   current_position,
-                  captures_str))    
-    
+                  captures_str))
+
     return(possible_moves, possible_special_moves, possible_captures)
-    
 
-###############################################################################
-#Front End
-
-#Board Positions Dictionary (should move to a separate file at some point)
+# Board Positions Dictionary (should move to a separate file at some point)
 bP = {
-        "1a": (25, 725),
-        "2a": (25, 625),
-        "3a": (25, 525),
-        "4a": (25, 425),
-        "5a": (25, 325),
-        "6a": (25, 225),
-        "7a": (25, 125),
-        "8a": (25, 25),
-        "1b": (125, 725),
-        "2b": (125, 625),
-        "3b": (125, 525),
-        "4b": (125, 425),
-        "5b": (125, 325),
-        "6b": (125, 225),
-        "7b": (125, 125),
-        "8b": (125, 25),
-        "1c": (225, 725),
-        "2c": (225, 625),
-        "3c": (225, 525),
-        "4c": (225, 425),
-        "5c": (225, 325),
-        "6c": (225, 225),
-        "7c": (225, 125),
-        "8c": (225, 25),
-        "1d": (325, 725),
-        "2d": (325, 625),
-        "3d": (325, 525),
-        "4d": (325, 425),
-        "5d": (325, 325),
-        "6d": (325, 225),
-        "7d": (325, 125),
-        "8d": (325, 25),
-        "1e": (425, 725),
-        "2e": (425, 625),
-        "3e": (425, 525),
-        "4e": (425, 425),
-        "5e": (425, 325),
-        "6e": (425, 225),
-        "7e": (425, 125),
-        "8e": (425, 25),
-        "1f": (525, 725),
-        "2f": (525, 625),
-        "3f": (525, 525),
-        "4f": (525, 425),
-        "5f": (525, 325),
-        "6f": (525, 225),
-        "7f": (525, 125),
-        "8f": (525, 25),
-        "1g": (625, 725),
-        "2g": (625, 625),
-        "3g": (625, 525),
-        "4g": (625, 425),
-        "5g": (625, 325),
-        "6g": (625, 225),
-        "7g": (625, 125),
-        "8g": (625, 25),
-        "1h": (725, 725),
-        "2h": (725, 625),
-        "3h": (725, 525),
-        "4h": (725, 425),
-        "5h": (725, 325),
-        "6h": (725, 225),
-        "7h": (725, 125),
-        "8h": (725, 25)
-        }
+    "1a": (25, 725),
+    "2a": (25, 625),
+    "3a": (25, 525),
+    "4a": (25, 425),
+    "5a": (25, 325),
+    "6a": (25, 225),
+    "7a": (25, 125),
+    "8a": (25, 25),
+    "1b": (125, 725),
+    "2b": (125, 625),
+    "3b": (125, 525),
+    "4b": (125, 425),
+    "5b": (125, 325),
+    "6b": (125, 225),
+    "7b": (125, 125),
+    "8b": (125, 25),
+    "1c": (225, 725),
+    "2c": (225, 625),
+    "3c": (225, 525),
+    "4c": (225, 425),
+    "5c": (225, 325),
+    "6c": (225, 225),
+    "7c": (225, 125),
+    "8c": (225, 25),
+    "1d": (325, 725),
+    "2d": (325, 625),
+    "3d": (325, 525),
+    "4d": (325, 425),
+    "5d": (325, 325),
+    "6d": (325, 225),
+    "7d": (325, 125),
+    "8d": (325, 25),
+    "1e": (425, 725),
+    "2e": (425, 625),
+    "3e": (425, 525),
+    "4e": (425, 425),
+    "5e": (425, 325),
+    "6e": (425, 225),
+    "7e": (425, 125),
+    "8e": (425, 25),
+    "1f": (525, 725),
+    "2f": (525, 625),
+    "3f": (525, 525),
+    "4f": (525, 425),
+    "5f": (525, 325),
+    "6f": (525, 225),
+    "7f": (525, 125),
+    "8f": (525, 25),
+    "1g": (625, 725),
+    "2g": (625, 625),
+    "3g": (625, 525),
+    "4g": (625, 425),
+    "5g": (625, 325),
+    "6g": (625, 225),
+    "7g": (625, 125),
+    "8g": (625, 25),
+    "1h": (725, 725),
+    "2h": (725, 625),
+    "3h": (725, 525),
+    "4h": (725, 425),
+    "5h": (725, 325),
+    "6h": (725, 225),
+    "7h": (725, 125),
+    "8h": (725, 25)
+}
 
-#Displays the board and pieces
+# Displays the board and pieces
 def display_board():
     """Displays the chess board and all the pieces"""
     create_checkerboard()
-    
-    #Add all the pieces
+
+    # Add all the pieces
     logging.debug("Adding the chess pieces to the board")
     for row in rows:
         for column in columns:
@@ -809,24 +803,24 @@ def display_board():
                     elif squares[position].color == BLACK:
                         create_piece_button(position, squares[position].color)
 
-#Display potential moves
+# Display potential moves
 def display_possible_moves(current_position):
-    """Displays all possible moves for the piece in a given position""" 
-    #Display the possible moves
+    """Displays all possible moves for the piece in a given position"""
+    # Display the possible moves
     global previous_position_shown
-    #Show potential moves for a given square
+    # Show potential moves for a given square
     if current_position != previous_position_shown:
         logging.info("Displaying possible moves for the %s %s at position %s" %
                      (squares[current_position].color,
                       piece_names[squares[current_position].piece_type],
                       current_position))
-        #Get an array of possible moves, special moves, and captures
+        # Get an array of possible moves, special moves, and captures
         [possible_moves, possible_special_moves, possible_captures] = \
         check_possible_moves(current_position)
-        
+
         create_checkerboard()
-        
-        #Now add the pieces and potential moves
+
+        # Now add the pieces and potential moves
         for row in rows:
             for column in columns:
                 position = str(row) + column
@@ -835,54 +829,54 @@ def display_possible_moves(current_position):
                 elif squares[position]:
                     if turn_color == WHITE:
                         if squares[position].color == WHITE:
-                            create_piece_button(position, 
+                            create_piece_button(position,
                                                 squares[position].color)
                         elif squares[position].color == BLACK:
-                            create_piece_label(position, 
+                            create_piece_label(position,
                                                squares[position].color)
                     elif turn_color == BLACK:
                         if squares[position].color == WHITE:
-                            create_piece_label(position, 
+                            create_piece_label(position,
                                                squares[position].color)
                         elif squares[position].color == BLACK:
-                            create_piece_button(position, 
+                            create_piece_button(position,
                                                 squares[position].color)
-                elif (position in possible_moves or position in 
+                elif (position in possible_moves or position in
                       possible_special_moves):
                     create_move_button(current_position, position, "Blue")
         previous_position_shown = current_position
-        
-    #Stop showing the potential moves for a given square
+
+    # Stop showing the potential moves for a given square
     elif current_position == previous_position_shown:
         logging.debug("Removing the potential moves from the board")
         display_board()
         previous_position_shown = None
 
-#Moves the piece
+# Moves the piece
 def move_the_piece(current_position, new_position):
     """Moves the chess piece in the back end of the program"""
-    #Move the piece in the back end
+    # Move the piece in the back end
     move_piece(current_position, new_position)
-    
-    #Change the turn color
+
+    # Change the turn color
     global turn_color
     if turn_color == WHITE:
         turn_color = BLACK
     elif turn_color == BLACK:
         turn_color = WHITE
-    
+
     reset_display()
-    
-def reset_display():    
+
+def reset_display():
     """Resets the turn display and checks if the game is over"""
-    #Make sure the game isn't over
+    # Make sure the game isn't over
     if not game_over:
         logging.debug("The game is still going on. Resetting the turn display")
-        #Re-display the board
+        # Re-display the board
         display_board()
-        
+
         global turn_frame
-        #See if the player is in check
+        # See if the player is in check
         if check_for_check():
             #Create the check turn frame
             turn_frame.destroy()
@@ -890,11 +884,11 @@ def reset_display():
             turn_frame.pack()
             turn_text = "Careful, " + turn_color +", you're in check!"
             if turn_color == WHITE:
-                turn_label = Label(overall_turn_frame, text=turn_text, 
+                turn_label = Label(overall_turn_frame, text=turn_text,
                                    bg="red", fg="white")
                 turn_label.place(x=0, y=0, height=100, width=250)
             elif turn_color == BLACK:
-                turn_label = Label(overall_turn_frame, text=turn_text, 
+                turn_label = Label(overall_turn_frame, text=turn_text,
                                    bg="red", fg="black")
                 turn_label.place(x=0, y=0, height=100, width=250)
         else:
@@ -904,23 +898,23 @@ def reset_display():
             turn_frame.pack()
             turn_text = turn_color+", it is your turn!"
             if turn_color == WHITE:
-                turn_label = Label(overall_turn_frame, text=turn_text, 
+                turn_label = Label(overall_turn_frame, text=turn_text,
                                    bg="white", fg="black")
                 turn_label.place(x=0, y=0, height=100, width=250)
             elif turn_color == BLACK:
-                turn_label = Label(overall_turn_frame, text=turn_text, 
+                turn_label = Label(overall_turn_frame, text=turn_text,
                                    bg="black", fg="white")
                 turn_label.place(x=0, y=0, height=100, width=250)
-    
-    #If the game is over, call the game over display function
+
+    # If the game is over, call the game over display function
     else:
         logging.info("The game is now over. Thank you for playing :)")
-        show_game_over()      
-        
+        show_game_over()
+
 def promotion(piece_position):
     """Creates the pawn promotion display the user will use to pick a piece"""
-    #Create the frame with buttons that the user will use to pick
-    #a piece during promotion
+    # Create the frame with buttons that the user will use to pick
+    # a piece during promotion
     logging.debug("Creating the promotion choice frame with piece buttons")
     global piece_choice
     piece_choice = Tk()
@@ -934,112 +928,112 @@ def promotion(piece_position):
     piece_choice_frame.pack()
     piece_choice_text = """Please choose the piece you would like to replace
                         the pawn"""
-    piece_choice_prompt = Label(piece_choice_frame, text=piece_choice_text, 
+    piece_choice_prompt = Label(piece_choice_frame, text=piece_choice_text,
                                 bg="white", fg="black")
     piece_choice_prompt.place(x=0, y=0, height=50, width=425)
-    
-    #Create the potential piece choice buttons
+
+    # Create the potential piece choice buttons
     q_button = Button(piece_choice_frame, text="Q", bg="green", fg="white")
-    q_button['command'] = lambda arg1 = "Q", arg2 = piece_position : \
+    q_button['command'] = lambda arg1="Q", arg2=piece_position: \
                           promotion_button_choice(arg1, arg2)
     q_button.place(x=45, y=75, height=50, width=50)
     k_button = Button(piece_choice_frame, text="k", bg="green", fg="white")
-    k_button['command'] = lambda arg1 = "k", arg2 = piece_position : \
+    k_button['command'] = lambda arg1="k", arg2=piece_position: \
                           promotion_button_choice(arg1, arg2)
     k_button.place(x=140, y=75, height=50, width=50)
     r_button = Button(piece_choice_frame, text="R", bg="green", fg="white")
-    r_button['command'] = lambda arg1 = "R", arg2 = piece_position : \
+    r_button['command'] = lambda arg1="R", arg2=piece_position: \
                           promotion_button_choice(arg1, arg2)
     r_button.place(x=235, y=75, height=50, width=50)
     b_button = Button(piece_choice_frame, text="B", bg="green", fg="white")
-    b_button['command'] = lambda arg1 = "B", arg2 = piece_position : \
+    b_button['command'] = lambda arg1="B", arg2=piece_position: \
                           promotion_button_choice(arg1, arg2)
     b_button.place(x=330, y=75, height=50, width=50)
 
 def promotion_button_choice(passed_piece, piece_position):
     """Completes the book-keeping after a pawn promotion"""
-    #Change the piece in the back end and reset displays
-    logging.info("The piece chosen for promotion was a %s" % 
+    # Change the piece in the back end and reset displays
+    logging.info("The piece chosen for promotion was a %s" %
                  (piece_names[passed_piece]))
     promotion_back_end(passed_piece, piece_position)
     piece_choice.destroy()
     reset_display()
-    
+
 def show_game_over():
     """Changes the displays if the game is over"""
     logging.debug("Game is over. Beginning final clean up steps")
     global turn_frame
     winning_color = squares[last_moved_piece].color
     game_over_text = "Game over! " + winning_color + " wins!"
-    
-    #Change the move turn frame and turn all buttons to labels
+
+    # Change the move turn frame and turn all buttons to labels
     turn_frame.destroy()
     turn_frame = Frame(overall_turn_frame, width=250, height=100)
     turn_frame.pack()
-    turn_label = Label(overall_turn_frame, text=game_over_text, 
+    turn_label = Label(overall_turn_frame, text=game_over_text,
                        bg="orange", fg="black")
     turn_label.place(x=0, y=0, height=100, width=250)
-    
+
     create_checkerboard()
-    
-    #Add the pieces but only with lables instead of buttons
+
+    # Add the pieces but only with lables instead of buttons
     for row in rows:
         for column in columns:
             position = str(row) + column
             if squares[position]:
                 create_piece_label(position, squares[position].color)
-                
+
 
 def create_piece_label(position, label_color):
     """Creates the chess piece labels"""
     logging.debug("Creating a %s %s label at position %s" %
                   (label_color,
-                  piece_names[squares[position].piece_type],
-                  position))
-    label = Label(temp_frame, text=squares[position].piece_type, 
+                   piece_names[squares[position].piece_type],
+                   position))
+    label = Label(temp_frame, text=squares[position].piece_type,
                   bg=label_color, fg=text_color[label_color])
     label.place(x=bP[position][0], y=bP[position][1], height=50, width=50)
-    
+
 def create_piece_button(position, button_color):
     """Creates the chess piece buttons"""
     logging.debug("Creating a %s %s button at position %s" %
                   (button_color,
-                  piece_names[squares[position].piece_type],
-                  position))
+                   piece_names[squares[position].piece_type],
+                   position))
     button = Button(temp_frame, text=squares[position].piece_type,
                     bg=button_color, fg=text_color[button_color])
-    button['command'] = lambda arg1 = position : display_possible_moves(arg1)
+    button['command'] = lambda arg1=position: display_possible_moves(arg1)
     button.place(x=bP[position][0], y=bP[position][1], height=50, width=50)
-        
+
 def create_capture_button(current_position, position, button_color):
     """Creates the red potential capture buttons"""
-    logging.debug("Creating a potential capture button at position %s" % 
+    logging.debug("Creating a potential capture button at position %s" %
                   (position))
-    button = Button(temp_frame, text=squares[position].piece_type, 
+    button = Button(temp_frame, text=squares[position].piece_type,
                     bg=button_color, fg=text_color[button_color])
-    button['command'] = lambda arg1 = current_position, \
-                        arg2 = position : move_the_piece(arg1, arg2)
+    button['command'] = lambda arg1=current_position, \
+                        arg2=position: move_the_piece(arg1, arg2)
     button.place(x=bP[position][0], y=bP[position][1], height=50, width=50)
-    
+
 def create_move_button(current_position, position, button_color):
     """Creates the blue potential move buttons"""
-    logging.debug("Creating a potential move button at position %s" % 
+    logging.debug("Creating a potential move button at position %s" %
                   (position))
-    button = Button(temp_frame, text="??", bg=button_color, 
+    button = Button(temp_frame, text="??", bg=button_color,
                     fg=text_color[button_color])
-    button['command'] = lambda arg1 = current_position, \
-                        arg2 = position : move_the_piece(arg1, arg2)
+    button['command'] = lambda arg1=current_position, \
+                        arg2=position: move_the_piece(arg1, arg2)
     button.place(x=bP[position][0], y=bP[position][1], height=50, width=50)
 
 def create_checkerboard():
     """Creates the chess checkboard without any pieces"""
-    #Cleanup the previous board
+    # Cleanup the previous board
     global temp_frame
     temp_frame.destroy()
     temp_frame = Frame(overall_frame, width=800, height=800)
     temp_frame.pack()
-    
-    #Create the checkerboard
+
+    # Create the checkerboard
     logging.debug("Creating the checkerboard")
     x_position = (0, 100, 200, 300, 400, 500, 600, 700)
     y_position = (0, 100, 200, 300, 400, 500, 600, 700)
@@ -1066,49 +1060,49 @@ def create_checkerboard():
 
 
 def main():
-    #Create the chess piece objects in the back end
+    # Create the chess piece objects in the back end
     for row in rows:
         for column in columns:
             square_name = str(row) + column
             squares[square_name] = None
-    #Add the white pieces
-    #First add the main pieces
+    # Add the white pieces
+    # First add the main pieces
     for column in columns:
         square_name = str(1) + column
-        if column == 'a' or column == 'h': #Rook starting points
+        if column == 'a' or column == 'h': # Rook starting points
             squares[square_name] = Rook(WHITE)
-        elif column == 'b' or column == 'g': #Knight starting points
+        elif column == 'b' or column == 'g': # Knight starting points
             squares[square_name] = Knight(WHITE)
-        elif column == 'c' or column == 'f': #Bishop starting points
+        elif column == 'c' or column == 'f': # Bishop starting points
             squares[square_name] = Bishop(WHITE)
-        elif column == 'd': #Queen starting point
+        elif column == 'd': # Queen starting point
             squares[square_name] = Queen(WHITE)
-        elif column == 'e': #King starting point
+        elif column == 'e': # King starting point
             squares[square_name] = King(WHITE)
-    #Then add the pawns
+    # Then add the pawns
     for column in columns:
         square_name = str(2) + column
         squares[square_name] = Pawn(WHITE)
-    #Add the black pieces
-    #First add the main pieces
+    # Add the black pieces
+    # First add the main pieces
     for column in columns:
         square_name = str(8) + column
-        if column == 'a' or column == 'h': #Rook starting points
+        if column == 'a' or column == 'h': # Rook starting points
             squares[square_name] = Rook(BLACK)
-        elif column == 'b' or column == 'g': #Knight starting points
+        elif column == 'b' or column == 'g': # Knight starting points
             squares[square_name] = Knight(BLACK)
-        elif column == 'c' or column == 'f': #Bishop starting points
+        elif column == 'c' or column == 'f': # Bishop starting points
             squares[square_name] = Bishop(BLACK)
-        elif column == 'd': #Queen starting point
+        elif column == 'd': # Queen starting point
             squares[square_name] = Queen(BLACK)
-        elif column == 'e': #King starting point
+        elif column == 'e': # King starting point
             squares[square_name] = King(BLACK)
-    #Then add the pawns
+    # Then add the pawns
     for column in columns:
         square_name = str(7) + column
         squares[square_name] = Pawn(BLACK)
-    
-    #Create front end global variables
+
+    # Create front end global variables
     global temp_frame
     global turn_frame
     global overall_frame
@@ -1121,14 +1115,14 @@ def main():
     previous_position_shown = None
     turn_color = WHITE
     game_over = False
-    
-    #Start up logging
+
+    # Start up logging
     logging.basicConfig(
-            format='[%(asctime)s] %(levelname)s : %(funcName)s() - %(message)s',
-            level=logging.INFO)
+        format='[%(asctime)s] %(levelname)s : %(funcName)s() - %(message)s',
+        level=logging.INFO)
     logging.info("Starting the game and the logger")
-    
-    #Create the overall shape
+
+    # Create the overall shape
     board = Tk()
     w1 = 800
     h1 = 800
@@ -1142,8 +1136,8 @@ def main():
     overall_frame.pack()
     temp_frame = Frame(overall_frame, width=w1, height=h1)
     temp_frame.pack()
-    
-    #Create the text box that displays whose turn it is
+
+    # Create the text box that displays whose turn it is
     player_turn = Tk()
     w2 = 250
     h2 = 100
@@ -1154,23 +1148,23 @@ def main():
     overall_turn_frame.pack()
     turn_frame = Frame(overall_turn_frame, width=w2, height=h2)
     turn_frame.pack()
-    turn_label = Label(overall_turn_frame, text="White, it is your turn!", 
+    turn_label = Label(overall_turn_frame, text="White, it is your turn!",
                        bg="white", fg="black")
     turn_label.place(x=0, y=0, height=100, width=250)
-    
-    #Start the game
+
+    # Start the game
     display_board()
-    
-    #Keep the overall board frame always displayed
+
+    # Keep the overall board frame always displayed
     board.mainloop()
-    
-    #Close the logger
+
+    # Close the logger
     logging.info("Ending the game and shutting down the logger")
     logging.shutdown()
 
-#Making some back end information globally accesible by placing it in __main__
-#Back end variable definitions
-columns = ('a','b','c','d','e','f','g','h')
+# Making some back end information globally accesible by placing it in __main__
+# Back end variable definitions
+columns = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
 rows = (1, 2, 3, 4, 5, 6, 7, 8)
 squares = {}
 WHITE = "White"
@@ -1186,6 +1180,6 @@ last_moved_piece = None
 global last_move_was_pawn_jump
 last_move_was_pawn_jump = None
 
-#This keeps the whole program from running when imported as a module
+# This keeps the whole program from running when imported as a module
 if __name__ == "__main__":
     main()
