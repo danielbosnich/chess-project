@@ -1,4 +1,6 @@
 """
+Chess!
+
 Created on Fri Nov 30 19:02:32 2018
 
 @author: danielb
@@ -485,6 +487,76 @@ class Rook(ChessPiece):
                         possible_captures.append(possible_move)
                     break
         return(possible_moves, possible_captures)
+
+
+class Game():
+    def __init__(self):
+        # Instance variables
+        self.game_over = False
+        self.columns = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
+        self.rows = (1, 2, 3, 4, 5, 6, 7, 8)
+        self.squares = {}
+        self.last_moved_piece = None
+        self.last_move_was_pawn_jump = None
+
+
+class Board():
+    def __init__(self):
+        self.display = BoardDisplay()
+
+
+class BoardDisplay():
+    def __init__(self):
+        # Display
+        self.root = None
+        self.frame = None
+        # Initialization methods
+        self._create_display_geometry()
+
+    def _create_display_geometry(self):
+        """Creates the display geometry"""
+        # Create the overall shape
+        self.root = Tk()
+        self.root.title("Chess Board")
+        display_width = 800
+        display_height = 800
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        display_x_pos = screen_width/3 - display_width/2
+        display_y_pos = screen_height*0.45 - display_height/2
+        self.root.geometry('%dx%d+%d+%d' % (display_width,
+                                            display_height,
+                                            display_x_pos,
+                                            display_y_pos))
+        self.frame = Frame(self.root,
+                           width=display_width,
+                           height=display_height)
+        self.frame.pack()
+        
+        # Create the checkerboard tiles
+        # Adding the tiles to the Tk root because they will never change
+        board_positions = (0, 100, 200, 300, 400, 500, 600, 700)
+        size = 100
+        light_color = "bisque2"
+        dark_color = "darkgoldenrod4"
+        for y_pos in board_positions:
+            if (y_pos/100)%2 == 0:
+                for x_pos in board_positions:
+                    if (x_pos/100)%2 == 0:
+                        square = Label(self.root, bg=light_color)
+                        square.place(x=x_pos, y=y_pos, height=size, width=size)
+                    else:
+                        square = Label(self.root, bg=dark_color)
+                        square.place(x=x_pos, y=y_pos, height=size, width=size)
+            else:
+                for x_pos in board_positions:
+                    if (x_pos/100)%2 == 0:
+                        square = Label(self.root, bg=dark_color)
+                        square.place(x=x_pos, y=y_pos, height=size, width=size)
+                    else:
+                        square = Label(self.root, bg=light_color)
+                        square.place(x=x_pos, y=y_pos, height=size, width=size)
+        
 
 def move_piece(current_position, new_position):
     """Moves the chess piece to a new position and checks some conditions
@@ -1060,47 +1132,54 @@ def create_checkerboard():
 
 
 def main():
+    """Main function"""
     # Create the chess piece objects in the back end
-    for row in rows:
-        for column in columns:
-            square_name = str(row) + column
-            squares[square_name] = None
+    #for row in rows:
+    #    for column in columns:
+    #        square_name = str(row) + column
+    #        squares[square_name] = None
+    
     # Add the white pieces
     # First add the main pieces
-    for column in columns:
-        square_name = str(1) + column
-        if column == 'a' or column == 'h': # Rook starting points
-            squares[square_name] = Rook(WHITE)
-        elif column == 'b' or column == 'g': # Knight starting points
-            squares[square_name] = Knight(WHITE)
-        elif column == 'c' or column == 'f': # Bishop starting points
-            squares[square_name] = Bishop(WHITE)
-        elif column == 'd': # Queen starting point
-            squares[square_name] = Queen(WHITE)
-        elif column == 'e': # King starting point
-            squares[square_name] = King(WHITE)
+    #for column in columns:
+    #    square_name = str(1) + column
+    #    if column == 'a' or column == 'h': # Rook starting points
+    #        squares[square_name] = Rook(WHITE)
+    #    elif column == 'b' or column == 'g': # Knight starting points
+    #        squares[square_name] = Knight(WHITE)
+    #    elif column == 'c' or column == 'f': # Bishop starting points
+    #        squares[square_name] = Bishop(WHITE)
+    #    elif column == 'd': # Queen starting point
+    #        squares[square_name] = Queen(WHITE)
+    #    elif column == 'e': # King starting point
+    #        squares[square_name] = King(WHITE)
+    
     # Then add the pawns
-    for column in columns:
-        square_name = str(2) + column
-        squares[square_name] = Pawn(WHITE)
+    #for column in columns:
+    #    square_name = str(2) + column
+    #    squares[square_name] = Pawn(WHITE)
+    
+    
     # Add the black pieces
     # First add the main pieces
-    for column in columns:
-        square_name = str(8) + column
-        if column == 'a' or column == 'h': # Rook starting points
-            squares[square_name] = Rook(BLACK)
-        elif column == 'b' or column == 'g': # Knight starting points
-            squares[square_name] = Knight(BLACK)
-        elif column == 'c' or column == 'f': # Bishop starting points
-            squares[square_name] = Bishop(BLACK)
-        elif column == 'd': # Queen starting point
-            squares[square_name] = Queen(BLACK)
-        elif column == 'e': # King starting point
-            squares[square_name] = King(BLACK)
+    #for column in columns:
+    #    square_name = str(8) + column
+    #    if column == 'a' or column == 'h': # Rook starting points
+    #        squares[square_name] = Rook(BLACK)
+    #    elif column == 'b' or column == 'g': # Knight starting points
+    #        squares[square_name] = Knight(BLACK)
+    #    elif column == 'c' or column == 'f': # Bishop starting points
+    #        squares[square_name] = Bishop(BLACK)
+    #    elif column == 'd': # Queen starting point
+    #        squares[square_name] = Queen(BLACK)
+    #    elif column == 'e': # King starting point
+    #        squares[square_name] = King(BLACK)
+    
     # Then add the pawns
-    for column in columns:
-        square_name = str(7) + column
-        squares[square_name] = Pawn(BLACK)
+    #for column in columns:
+    #    square_name = str(7) + column
+    #    squares[square_name] = Pawn(BLACK)
+
 
     # Create front end global variables
     global temp_frame
@@ -1123,40 +1202,43 @@ def main():
     logging.info("Starting the game and the logger")
 
     # Create the overall shape
-    board = Tk()
-    w1 = 800
-    h1 = 800
-    ws = board.winfo_screenwidth()
-    hs = board.winfo_screenheight()
-    x1 = ws/3 - w1/2
-    y1 = hs*0.45 - h1/2
-    board.geometry('%dx%d+%d+%d' % (w1, h1, x1, y1))
-    board.title("Chess Board")
-    overall_frame = Frame(board, width=w1, height=h1)
-    overall_frame.pack()
-    temp_frame = Frame(overall_frame, width=w1, height=h1)
-    temp_frame.pack()
+    #board = Tk()
+    #w1 = 800
+    #h1 = 800
+    #ws = board.winfo_screenwidth()
+    #hs = board.winfo_screenheight()
+    #x1 = ws/3 - w1/2
+    #y1 = hs*0.45 - h1/2
+    #board.geometry('%dx%d+%d+%d' % (w1, h1, x1, y1))
+    #board.title("Chess Board")
+    #overall_frame = Frame(board, width=w1, height=h1)
+    #overall_frame.pack()
+    #temp_frame = Frame(overall_frame, width=w1, height=h1)
+    #temp_frame.pack()
 
     # Create the text box that displays whose turn it is
-    player_turn = Tk()
-    w2 = 250
-    h2 = 100
-    x2 = 2*ws/3 - w2/2
-    y2 = hs*0.45 - h2/2
-    player_turn.geometry('%dx%d+%d+%d' % (w2, h2, x2, y2))
-    overall_turn_frame = Frame(player_turn, width=w2, height=h2)
-    overall_turn_frame.pack()
-    turn_frame = Frame(overall_turn_frame, width=w2, height=h2)
-    turn_frame.pack()
-    turn_label = Label(overall_turn_frame, text="White, it is your turn!",
-                       bg="white", fg="black")
-    turn_label.place(x=0, y=0, height=100, width=250)
+    #player_turn = Tk()
+    #w2 = 250
+    #h2 = 100
+    #x2 = 2*ws/3 - w2/2
+    #y2 = hs*0.45 - h2/2
+    #player_turn.geometry('%dx%d+%d+%d' % (w2, h2, x2, y2))
+    #overall_turn_frame = Frame(player_turn, width=w2, height=h2)
+    #overall_turn_frame.pack()
+    #turn_frame = Frame(overall_turn_frame, width=w2, height=h2)
+    #turn_frame.pack()
+    #turn_label = Label(overall_turn_frame, text="White, it is your turn!",
+    #                   bg="white", fg="black")
+    #turn_label.place(x=0, y=0, height=100, width=250)
 
     # Start the game
-    display_board()
+    #display_board()
 
     # Keep the overall board frame always displayed
-    board.mainloop()
+    #board.mainloop()
+    
+    board = BoardDisplay()
+    board.root.mainloop()
 
     # Close the logger
     logging.info("Ending the game and shutting down the logger")
