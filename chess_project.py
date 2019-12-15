@@ -6,7 +6,7 @@ Created on Fri Nov 30 19:02:32 2018
 @author: danielb
 """
 
-from tkinter import Tk, Label, Button, Frame
+from tkinter import Tk, Toplevel, Label, Button
 import logging
 from helpful_dictionaries import piece_names, text_color, tile_positions
 from helpful_functions import index_to_letter, letter_to_index
@@ -31,13 +31,22 @@ class ChessPiece():
         self.piece_type = piece_type
         self.position = position
         self.has_been_moved = False
+        self.possible_moves = []
+        self.possible_special_moves = []
+        self.possible_captures = []
         self.button = None
         self._create_button(frame)
 
-    def potential_moves(self, current_position):
+    def check_potential_moves(self, current_position):
         """Virual method for finding potential chess piece moves. Implemented
         by each child class"""
         pass
+
+    def clear_potential_moves(self):
+        """Clears the potential move and capture lists"""
+        self.possible_moves.clear()
+        self.possible_special_moves.clear()
+        self.possible_captures.clear()
 
     def _create_button(self, frame):
         """Creates the piece button"""
@@ -48,7 +57,8 @@ class ChessPiece():
         self.button = Button(frame,
                              text=self.piece_type[0],
                              bg=self.color,
-                             fg=text_color[self.color])
+                             fg=text_color[self.color],
+                             cursor='hand2')
         # button['command'] = lambda arg1=position: display_possible_moves(arg1)
         self.button.place(x=tile_positions[self.position].x,
                           y=tile_positions[self.position].y,
@@ -57,8 +67,8 @@ class ChessPiece():
     def update_position(self, new_position):
         """Moves the piece and updates button on the board"""
         self.position = new_position
-        self.button.configure(x=tile_positions[self.position].x,
-                              y=tile_positions[self.position].y)
+        self.button.place(x=tile_positions[self.position].x,
+                          y=tile_positions[self.position].y)
 
     def disable_button(self, position, frame):
         """Disables the button by changing it to a label"""
@@ -76,95 +86,91 @@ class Bishop(ChessPiece):
     """Child class for the Bishop piece"""
     def __init__(self, color, position, frame):
         super().__init__(color, position, frame, 'Bishop')
+        self._negative_steps = [-1, -2, -3, -4, -5, -6, -7]
+        self._positive_steps = [1, 2, 3, 4, 5, 6, 7]
 
-    def potential_moves(self):
+    def check_potential_moves(self, squares):
         """Returns all potential moves and captures for a bishop"""
         current_row = int(self.position[0])
         current_column = letter_to_index(self.position[1])
-        negative_steps = [-1, -2, -3, -4, -5, -6, -7]
-        positive_steps = [1, 2, 3, 4, 5, 6, 7]
-        possible_moves = []
-        possible_captures = []
+        self.clear_potential_moves()
+
         # Diagonal down and left
-        for i in negative_steps:
+        for i in self._negative_steps:
             adjusted_column = index_to_letter(current_column + i)
             adjusted_row = current_row + i
             if adjusted_column in COLUMNS and adjusted_row in ROWS:
                 possible_move = str(adjusted_row) + adjusted_column
                 if not squares[possible_move]:
-                    possible_moves.append(possible_move)
-                elif squares[possible_move]:
+                    self.possible_moves.append(possible_move)
+                else:
                     if squares[possible_move].color != self.color:
-                        possible_captures.append(possible_move)
+                        self.possible_captures.append(possible_move)
                     break
         # Diagonal down and right
-        for i in negative_steps:
+        for i in self._negative_steps:
             adjusted_column = index_to_letter(current_column + i)
             adjusted_row = current_row - i
             if adjusted_column in COLUMNS and adjusted_row in ROWS:
                 possible_move = str(adjusted_row) + adjusted_column
                 if not squares[possible_move]:
-                    possible_moves.append(possible_move)
-                elif squares[possible_move]:
+                    self.possible_moves.append(possible_move)
+                else:
                     if squares[possible_move].color != self.color:
-                        possible_captures.append(possible_move)
+                        self.possible_captures.append(possible_move)
                     break
         # Diagonal up and right
-        for i in positive_steps:
+        for i in self._positive_steps:
             adjusted_column = index_to_letter(current_column + i)
             adjusted_row = current_row + i
             if adjusted_column in COLUMNS and adjusted_row in ROWS:
                 possible_move = str(adjusted_row) + adjusted_column
                 if not squares[possible_move]:
-                    possible_moves.append(possible_move)
-                elif squares[possible_move]:
+                    self.possible_moves.append(possible_move)
+                else:
                     if squares[possible_move].color != self.color:
-                        possible_captures.append(possible_move)
+                        self.possible_captures.append(possible_move)
                     break
         # Diagonal up and left
-        for i in positive_steps:
+        for i in self._positive_steps:
             adjusted_column = index_to_letter(current_column + i)
             adjusted_row = current_row - i
             if adjusted_column in COLUMNS and adjusted_row in ROWS:
                 possible_move = str(adjusted_row) + adjusted_column
                 if not squares[possible_move]:
-                    possible_moves.append(possible_move)
-                elif squares[possible_move]:
+                    self.possible_moves.append(possible_move)
+                else:
                     if squares[possible_move].color != self.color:
-                        possible_captures.append(possible_move)
+                        self.possible_captures.append(possible_move)
                     break
-        return(possible_moves, possible_captures)
 
 class King(ChessPiece):
     """Child class for the King piece"""
     def __init__(self, color, position, frame):
         super().__init__(color, position, frame, 'King')
+        self.steps = [-1, 0, 1]
 
-    def potential_moves(sel):
-        """Returns all potential moves, special moves, and potential captures
-        for a king"""
+    def potential_moves(self, squares):
+        """Sets all potential moves and captures for a king"""
         current_row = int(self.position[0])
         current_column = letter_to_index(self.position[1])
-        steps = [-1, 0, 1]
-        possible_moves = []
-        possible_special_moves = []
-        possible_captures = []
-        for i in steps:
-            for j in steps:
+        self.clear_potential_moves()
+        for i in self.steps:
+            for j in self.steps:
                 adjusted_column = index_to_letter(current_column + i)
                 adjusted_row = current_row + j
                 if adjusted_column in COLUMNS and adjusted_row in ROWS:
                     possible_move = str(adjusted_row) + adjusted_column
                     if not squares[possible_move]:
-                        possible_moves.append(possible_move)
+                        self.possible_moves.append(possible_move)
                     elif squares[possible_move]:
                         if squares[possible_move].color != self.color:
-                            possible_captures.append(possible_move)
+                            self.possible_captures.append(possible_move)
 
         # Check for possible castle move
-        if not squares[current_position].has_been_moved:
+        if not squares[self.position].has_been_moved:
             # Check the white pieces
-            if squares[current_position].color == "White":
+            if squares[self.position].color == "White":
                 # Check for king side castle first
                 in_between_positions = []
                 rook_position = "1h"
@@ -180,7 +186,7 @@ class King(ChessPiece):
                     if all(not check for check in in_between_positions):
                         possible_move = str(current_row) + \
                         index_to_letter(current_column + 2)
-                        possible_special_moves.append(possible_move)
+                        self.possible_special_moves.append(possible_move)
                 # Now check for queen side castle
                 in_between_positions = []
                 rook_position = "1a"
@@ -196,9 +202,9 @@ class King(ChessPiece):
                     if all(not check for check in in_between_positions):
                         possible_move = str(current_row) + \
                         index_to_letter(current_column - 2)
-                        possible_special_moves.append(possible_move)
+                        self.possible_special_moves.append(possible_move)
             # Check the black pieces
-            if squares[current_position].color == "Black":
+            elif squares[self.position].color == "Black":
                 # Check for king side castle first
                 in_between_positions = []
                 rook_position = "8h"
@@ -214,7 +220,7 @@ class King(ChessPiece):
                     if all(not check for check in in_between_positions):
                         possible_move = str(current_row) + \
                         index_to_letter(current_column + 2)
-                        possible_special_moves.append(possible_move)
+                        self.possible_special_moves.append(possible_move)
                 # Now check for queen side castle
                 in_between_positions = []
                 rook_position = "8a"
@@ -230,75 +236,69 @@ class King(ChessPiece):
                     if all(not check for check in in_between_positions):
                         possible_move = str(current_row) + \
                         index_to_letter(current_column - 2)
-                        possible_special_moves.append(possible_move)
+                        self.possible_special_moves.append(possible_move)
 
-        return(possible_moves, possible_special_moves, possible_captures)
 
 class Knight(ChessPiece):
     """Child class for the Knight piece"""
     def __init__(self, color, position, frame):
         super().__init__(color, position, frame, 'Knight')
+        self.steps = [-2, -1, 1, 2]
 
-    def potential_moves(self):
-        """Returns all potential moves and captures for a knight"""
+    def check_potential_moves(self, squares):
+        """Sets all potential moves and captures for a knight"""
         current_row = int(self.position[0])
         current_column = letter_to_index(self.position[1])
-        steps = [-2, -1, 1, 2]
-        possible_moves = []
-        possible_captures = []
-        for i in steps:
-            for j in steps:
+        self.clear_potential_moves()
+        for i in self.steps:
+            for j in self.steps:
                 adjusted_column = index_to_letter(current_column + i)
                 adjusted_row = current_row + j
                 if abs(i) + abs(j) == 3:
                     if adjusted_column in COLUMNS and adjusted_row in ROWS:
                         possible_move = str(adjusted_row) + adjusted_column
                         if not squares[possible_move]:
-                            possible_moves.append(possible_move)
+                            self.possible_moves.append(possible_move)
                         elif squares[possible_move]:
                             if squares[possible_move].color != self.color:
-                                possible_captures.append(possible_move)
-        return(possible_moves, possible_captures)
+                                self.possible_captures.append(possible_move)
+
 
 class Pawn(ChessPiece):
     """Child class for the Pawn piece"""
     def __init__(self, color, position, frame):
         super().__init__(color, position, frame, 'Pawn')
 
-    def potential_moves(self):
-        """Returns all potential moves, special moves, and potential captures
-        for a pawn"""
+    def check_potential_moves(self, squares):
+        """Sets all potential moves and captures for a pawn"""
         current_row = int(self.position[0])
         current_column = letter_to_index(self.position[1])
-        possible_moves = []
-        possible_special_moves = []
-        possible_captures = []
+        self.clear_potential_moves()
         if self.color == 'Black':
             adjusted_row = current_row - 1
         elif self.color == 'White':
             adjusted_row = current_row + 1
-        if adjusted_row in rows:
+        if adjusted_row in ROWS:
             possible_move = str(adjusted_row) + index_to_letter(current_column)
             if not squares[possible_move]:
-                possible_moves.append(possible_move)
+                self.possible_moves.append(possible_move)
 
         # Check for possible captures separately
-        if piece_color == 'Black':
+        if self.color == 'Black':
             adjusted_row = current_row - 1
-        elif piece_color == 'White':
+        else:
             adjusted_row = current_row + 1
-        if adjusted_row in rows:
+        if adjusted_row in ROWS:
             for i in -1, 1:
                 adjusted_column = index_to_letter(current_column + i)
-                if adjusted_column in columns:
+                if adjusted_column in COLUMNS:
                     possible_capture = str(adjusted_row) + adjusted_column
                     if squares[possible_capture]:
-                        if squares[possible_capture].color != piece_color:
-                            possible_captures.append(possible_capture)
+                        if squares[possible_capture].color != self.color:
+                            self.possible_captures.append(possible_capture)
 
         # Check if the pawn hasn't been moved yet and can skip a square
-        if (piece_color == 'Black' and
-                not squares[current_position].has_been_moved):
+        if self.color == 'Black' and not self.has_been_moved:
             adjusted_row = current_row - 2
             check_row_in_front = current_row - 1
             possible_move = str(adjusted_row) + index_to_letter(current_column)
@@ -306,9 +306,8 @@ class Pawn(ChessPiece):
             index_to_letter(current_column)
             if (not squares[check_square_in_front] and
                     not squares[possible_move]):
-                possible_moves.append(possible_move)
-        elif (piece_color == 'White' and
-              not squares[current_position].has_been_moved):
+                self.possible_moves.append(possible_move)
+        elif self.color == 'White' and not self.has_been_moved:
             adjusted_row = current_row + 2
             check_row_in_front = current_row + 1
             possible_move = str(adjusted_row) + index_to_letter(current_column)
@@ -316,14 +315,16 @@ class Pawn(ChessPiece):
             index_to_letter(current_column)
             if (not squares[check_square_in_front] and
                     not squares[possible_move]):
-                possible_moves.append(possible_move)
+                self.possible_moves.append(possible_move)
 
         # Check for an En Passent
+        # TODO: Figure out how to pass lash_move_was_pawn_jump
+        last_move_was_pawn_jump = False
         if last_move_was_pawn_jump:
             required_column = last_move_was_pawn_jump[1]
             logging.debug("The required column for the en passent is %s" %
                           (required_column))
-            if piece_color == BLACK and current_row == 4:
+            if self.color == BLACK and current_row == 4:
                 for i in -1, 1:
                     adjusted_column = index_to_letter(current_column + i)
                     if adjusted_column in COLUMNS:
@@ -334,9 +335,9 @@ class Pawn(ChessPiece):
                                     adjusted_row = current_row - 1
                                     possible_capture_move = str(adjusted_row) \
                                     + adjusted_column
-                                    possible_special_moves.append(
+                                    self.possible_special_moves.append(
                                         possible_capture_move)
-            elif piece_color == WHITE and current_row == 5:
+            elif self.color == WHITE and current_row == 5:
                 for i in -1, 1:
                     adjusted_column = index_to_letter(current_column + i)
                     if adjusted_column in COLUMNS:
@@ -347,183 +348,178 @@ class Pawn(ChessPiece):
                                     adjusted_row = current_row + 1
                                     possible_capture_move = str(adjusted_row) \
                                     + adjusted_column
-                                    possible_special_moves.append(
+                                    self.possible_special_moves.append(
                                         possible_capture_move)
-        return(possible_moves, possible_special_moves, possible_captures)
 
 class Queen(ChessPiece):
     """Child class for the Queen piece"""
     def __init__(self, color, position, frame):
         super().__init__(color, position, frame, 'Queen')
+        self._negative_steps = [-1, -2, -3, -4, -5, -6, -7]
+        self._positive_steps = [1, 2, 3, 4, 5, 6, 7]
 
-    def potential_moves(self):
+    def check_potential_moves(self, squares):
         """Returns all potential moves and captures for a queen"""
         current_row = int(self.position[0])
         current_column = letter_to_index(self.position[1])
-        negative_steps = [-1, -2, -3, -4, -5, -6, -7]
-        positive_steps = [1, 2, 3, 4, 5, 6, 7]
-        possible_moves = []
-        possible_captures = []
+        self.clear_potential_moves()
         # Straight moves
         # Left
-        for i in negative_steps:
+        for i in self._negative_steps:
             adjusted_column = index_to_letter(current_column + i)
             if adjusted_column in COLUMNS:
                 possible_move = str(current_row) + adjusted_column
                 if not squares[possible_move]:
-                    possible_moves.append(possible_move)
-                elif squares[possible_move]:
+                    self.possible_moves.append(possible_move)
+                else:
                     if squares[possible_move].color != self.color:
-                        possible_captures.append(possible_move)
+                        self.possible_captures.append(possible_move)
                     break
         # Right
-        for i in positive_steps:
+        for i in self._positive_steps:
             adjusted_column = index_to_letter(current_column + i)
             if adjusted_column in COLUMNS:
                 possible_move = str(current_row) + adjusted_column
                 if not squares[possible_move]:
-                    possible_moves.append(possible_move)
-                elif squares[possible_move]:
+                    self.possible_moves.append(possible_move)
+                else:
                     if squares[possible_move].color != self.color:
-                        possible_captures.append(possible_move)
+                        self.possible_captures.append(possible_move)
                     break
         # Down
-        for i in negative_steps:
+        for i in self._negative_steps:
             adjusted_row = current_row + i
             if adjusted_row in ROWS:
                 possible_move = str(adjusted_row) + \
                 index_to_letter(current_column)
                 if not squares[possible_move]:
-                    possible_moves.append(possible_move)
-                elif squares[possible_move]:
+                    self.possible_moves.append(possible_move)
+                else:
                     if squares[possible_move].color != self.color:
-                        possible_captures.append(possible_move)
+                        self.possible_captures.append(possible_move)
                     break
         # Up
-        for i in positive_steps:
+        for i in self._positive_steps:
             adjusted_row = current_row + i
             if adjusted_row in ROWS:
                 possible_move = str(adjusted_row) + \
                 index_to_letter(current_column)
                 if not squares[possible_move]:
-                    possible_moves.append(possible_move)
-                elif squares[possible_move]:
+                    self.possible_moves.append(possible_move)
+                else:
                     if squares[possible_move].color != self.color:
-                        possible_captures.append(possible_move)
+                        self.possible_captures.append(possible_move)
                     break
         # Diagonal moves
         # Diagonal down and left
-        for i in negative_steps:
+        for i in self._negative_steps:
             adjusted_column = index_to_letter(current_column + i)
             adjusted_row = current_row + i
             if adjusted_column in COLUMNS and adjusted_row in ROWS:
                 possible_move = str(adjusted_row) + adjusted_column
                 if not squares[possible_move]:
-                    possible_moves.append(possible_move)
-                elif squares[possible_move]:
+                    self.possible_moves.append(possible_move)
+                else:
                     if squares[possible_move].color != self.color:
-                        possible_captures.append(possible_move)
+                        self.possible_captures.append(possible_move)
                     break
         # Diagonal down and right
-        for i in negative_steps:
+        for i in self._negative_steps:
             adjusted_column = index_to_letter(current_column + i)
             adjusted_row = current_row - i
             if adjusted_column in COLUMNS and adjusted_row in ROWS:
                 possible_move = str(adjusted_row) + adjusted_column
                 if not squares[possible_move]:
-                    possible_moves.append(possible_move)
-                elif squares[possible_move]:
+                    self.possible_moves.append(possible_move)
+                else:
                     if squares[possible_move].color != self.color:
-                        possible_captures.append(possible_move)
+                        self.possible_captures.append(possible_move)
                     break
         # Diagonal up and right
-        for i in positive_steps:
+        for i in self._positive_steps:
             adjusted_column = index_to_letter(current_column + i)
             adjusted_row = current_row + i
             if adjusted_column in COLUMNS and adjusted_row in ROWS:
                 possible_move = str(adjusted_row) + adjusted_column
                 if not squares[possible_move]:
-                    possible_moves.append(possible_move)
-                elif squares[possible_move]:
+                    self.possible_moves.append(possible_move)
+                else:
                     if squares[possible_move].color != self.color:
-                        possible_captures.append(possible_move)
+                        self.possible_captures.append(possible_move)
                     break
         # Diagonal up and left
-        for i in positive_steps:
+        for i in self._positive_steps:
             adjusted_column = index_to_letter(current_column + i)
             adjusted_row = current_row - i
             if adjusted_column in COLUMNS and adjusted_row in ROWS:
                 possible_move = str(adjusted_row) + adjusted_column
                 if not squares[possible_move]:
-                    possible_moves.append(possible_move)
-                elif squares[possible_move]:
+                    self.possible_moves.append(possible_move)
+                else:
                     if squares[possible_move].color != self.color:
-                        possible_captures.append(possible_move)
+                        self.possible_captures.append(possible_move)
                     break
-        return(possible_moves, possible_captures)
 
 class Rook(ChessPiece):
     """Child class for the Rook piece"""
     def __init__(self, color, position, frame):
         super().__init__(color, position, frame, 'Rook')
+        self._negative_steps = [-1, -2, -3, -4, -5, -6, -7]
+        self._positive_steps = [1, 2, 3, 4, 5, 6, 7]
 
-    def potential_moves(self):
+    def check_potential_moves(self, squares):
         """Returns all potential moves and captures for a rook"""
         current_row = int(self.position[0])
         current_column = letter_to_index(self.position[1])
-        negative_steps = [-1, -2, -3, -4, -5, -6, -7]
-        positive_steps = [1, 2, 3, 4, 5, 6, 7]
-        possible_moves = []
-        possible_captures = []
+        self.clear_potential_moves()
         # Horizontal movements
         # Left
-        for i in negative_steps:
+        for i in self._negative_steps:
             adjusted_column = index_to_letter(current_column + i)
             if adjusted_column in COLUMNS:
                 possible_move = str(current_row) + adjusted_column
                 if not squares[possible_move]:
-                    possible_moves.append(possible_move)
-                elif squares[possible_move]:
-                    if squares[possible_move].color != piece_color:
-                        possible_captures.append(possible_move)
+                    self.possible_moves.append(possible_move)
+                else:
+                    if squares[possible_move].color != self.color:
+                        self.possible_captures.append(possible_move)
                     break
         # Right
-        for i in positive_steps:
+        for i in self._positive_steps:
             adjusted_column = index_to_letter(current_column + i)
             if adjusted_column in COLUMNS:
                 possible_move = str(current_row) + adjusted_column
                 if not squares[possible_move]:
-                    possible_moves.append(possible_move)
-                elif squares[possible_move]:
-                    if squares[possible_move].color != piece_color:
-                        possible_captures.append(possible_move)
+                    self.possible_moves.append(possible_move)
+                else:
+                    if squares[possible_move].color != self.color:
+                        self.possible_captures.append(possible_move)
                     break
         # Vertical movements
         # Down
-        for i in negative_steps:
+        for i in self._negative_steps:
             adjusted_row = current_row + i
             if adjusted_row in ROWS:
                 possible_move = str(adjusted_row) + \
                 index_to_letter(current_column)
                 if not squares[possible_move]:
-                    possible_moves.append(possible_move)
-                elif squares[possible_move]:
-                    if squares[possible_move].color != piece_color:
-                        possible_captures.append(possible_move)
+                    self.possible_moves.append(possible_move)
+                else:
+                    if squares[possible_move].color != self.color:
+                        self.possible_captures.append(possible_move)
                     break
         # Up
-        for i in positive_steps:
+        for i in self._positive_steps:
             adjusted_row = current_row + i
             if adjusted_row in ROWS:
                 possible_move = str(adjusted_row) + \
                 index_to_letter(current_column)
                 if not squares[possible_move]:
-                    possible_moves.append(possible_move)
-                elif squares[possible_move]:
-                    if squares[possible_move].color != piece_color:
-                        possible_captures.append(possible_move)
+                    self.possible_moves.append(possible_move)
+                else:
+                    if squares[possible_move].color != self.color:
+                        self.possible_captures.append(possible_move)
                     break
-        return(possible_moves, possible_captures)
 
 
 
@@ -563,6 +559,8 @@ class Game():
     def __init__(self):
         # Instance variables
         self._display = BoardDisplay()
+        self._turn_display = TurnDisplay()
+        self._promotion_display = None
         self._pieces = []
         self._possible_move_buttons = []
         self._game_over = False
@@ -572,6 +570,10 @@ class Game():
         self._previous_position_shown = None
         # Initialiation methods
         self._create_pieces()
+
+    def maintain_display(self):
+        """Maintains the Tkinter display"""
+        self._display.root.mainloop()
 
     def _create_pieces(self):
         """Creates the chess piece objects and adds them to the board"""
@@ -588,11 +590,18 @@ class Game():
                 piece = Queen(WHITE, square_name, self._display.root)
             elif column == 'e': # King starting point
                 piece = King(WHITE, square_name, self._display.root)
+            piece.button.bind('<ButtonRelease-1>',
+                              lambda event, arg1=piece, arg2=square_name:
+                              self._display_possible_moves(event, arg1, arg2))
             self._pieces.append(piece)
+
         # Then add the white pawns
         for column in COLUMNS:
             square_name = str(2) + column
             piece = Pawn(WHITE, square_name, self._display.root)
+            piece.button.bind('<ButtonRelease-1>',
+                              lambda event, arg1=piece, arg2=square_name:
+                              self._display_possible_moves(event, arg1, arg2))
             self._pieces.append(piece)
 
         # Add the main black pieces
@@ -608,52 +617,54 @@ class Game():
                 piece = Queen(BLACK, square_name, self._display.root)
             elif column == 'e': # King starting point
                 piece = King(BLACK, square_name, self._display.root)
+            piece.button.bind('<ButtonRelease-1>',
+                              lambda event, arg1=piece, arg2=square_name:
+                              self._display_possible_moves(event, arg1, arg2))
             self._pieces.append(piece)
         # Then add the black pawns
         for column in COLUMNS:
             square_name = str(7) + column
             piece = Pawn(BLACK, square_name, self._display.root)
+            piece.button.bind('<ButtonRelease-1>',
+                              lambda event, arg1=piece, arg2=square_name:
+                              self._display_possible_moves(event, arg1, arg2))
             self._pieces.append(piece)
 
-    def maintain_display(self):
-        """Maintains the Tkinter display"""
-        self._display.root.mainloop()
-
-    def display_possible_moves(self, current_position):
+    def _display_possible_moves(self, event, piece, current_position):
         """Displays all possible moves for the piece in a given position"""
         # Show potential moves for a given square
-        if current_position != self.previous_position_shown:
-            # Get an array of possible moves, special moves, and captures
-            [possible_moves, possible_special_moves, possible_captures] = \
-            check_possible_moves(current_position)
-            for row in ROWS:
-                for column in COLUMNS:
-                    position = str(row) + column
-                if position in possible_captures:
-                    self.create_capture_button(position, 'Red')
-                elif (position in possible_moves or position in
-                      possible_special_moves or position in possible_captures):
-                    self.create_move_button(position, 'Blue')
-            self.create_move_button(current_position)
-            self.previous_position_shown = current_position
+        if current_position != self._previous_position_shown:
+            if self._possible_move_buttons:
+                self._clear_possible_moves()
+            # Check potential moves for the piece
+            piece.check_potential_moves(self.return_squares())
+            for position in piece.possible_captures:
+                self._create_move_button(piece, position, 'Red')
+            for position in piece.possible_moves:
+                self._create_move_button(piece, position, 'Blue')
+            for position in piece.possible_special_moves:
+                self._create_move_button(piece, position, 'Blue')
+            self._previous_position_shown = current_position
 
         # Stop showing the potential moves for a given square
         else:
             logging.debug("Removing the potential moves from the board")
-            self.clear_possible_moves()
-            self.previous_position_shown = None
+            self._clear_possible_moves()
+            self._previous_position_shown = None
 
-    def clear_possible_moves(self):
+    def _clear_possible_moves(self):
         """Clears the possible move buttons"""
         for button in self._possible_move_buttons:
             button.destroy()
         self._possible_move_buttons.clear()
 
-    def create_move_button(self, position, color):
+    def _create_move_button(self, piece, position, color):
         """Creates the potential move button"""
-        button = Button(self._display.root, text='???',
+        button = Button(self._display.root, text='??',
                         bg=color, fg='White', cursor='hand2')
-        #button['command'] = lambda arg1=position: display_possible_moves(arg1)
+        button.bind('<ButtonRelease-1>',
+                    lambda event, arg1=piece, arg2=position:
+                    self._move_piece(event, arg1, arg2))
         button.place(x=tile_positions[position].x,
                      y=tile_positions[position].y,
                      height=BUTTON_SIZE, width=BUTTON_SIZE)
@@ -666,6 +677,17 @@ class Game():
                 return True
         return False
 
+    def remove_piece(self, position):
+        """Removes the piece at the passed position"""
+        to_remove = None
+        for piece in self._pieces:
+            if piece.position == position:
+                to_remove = piece
+                break
+        to_remove.button.destroy()
+        self._pieces.remove(to_remove)
+        del to_remove
+
     def return_piece(self, position):
         """Returns the chess piece object from the passed position"""
         for piece in self._pieces:
@@ -673,60 +695,33 @@ class Game():
                 return piece
         return None
 
-    def add_piece(self, piece_type, piece_color, position):
-        """Creates the correct type of chess piece based on the inputs"""
-        # Different piece types
-        if piece_type == BISHOP:
-            piece = Bishop(piece_color)
-        elif piece_type == KING:
-            piece = King(piece_color)
-        elif piece_type == KNIGHT:
-            piece = Knight(piece_color)
-        elif piece_type == PAWN:
-            piece = Pawn(piece_color)
-        elif piece_type == QUEEN:
-            piece = Queen(piece_color)
-        elif piece_type == ROOK:
-            piece = Rook(piece_color)
-        self.pieces.append(piece)
+    def return_squares(self):
+        """Returns a dictionary of square positions and their corresponding
+        chess piece (or None if there is no piece)"""
+        squares = {}
+        for row in ROWS:
+            for column in COLUMNS:
+                square_name = str(row) + column
+                squares[square_name] = None
+        for piece in self._pieces:
+            squares[piece.position] = piece
+        return squares
 
     def show_game_over(self):
         """Changes the displays if the game is over"""
-        #game_over_text = "Game over! " + self.turn_color + " wins!"
-
-        # Change the move turn frame and turn all buttons to labels
-        #turn_frame.destroy()
-        #turn_frame = Frame(overall_turn_frame, width=250, height=100)
-        #turn_frame.pack()
-        #turn_label = Label(overall_turn_frame, text=game_over_text,
-                           #bg="orange", fg="black")
-        #turn_label.place(x=0, y=0, height=100, width=250)
-
         # Add the pieces but only with lables instead of buttons
         for piece in self._pieces:
             piece.disable_button()
 
-    def move_the_piece(self, current_position, new_position):
-        """Moves the chess piece in the back end of the program"""
-        # Move the piece in the back end
-        self.move_piece(current_position, new_position)
+        self._turn_display.show_game_over_display(self, WHITE)
 
-        # Change the turn color
-        if self.turn_color == WHITE:
-            self.turn_color = BLACK
-        else:
-            self.turn_color = WHITE
-
-    def move_piece(self, current_position, new_position):
+    def _move_piece(self, event, piece, new_position):
         """Moves the chess piece to a new position and checks some conditions
         after the move"""
-        # Get possible moves and possible captures
-        [possible_moves, possible_special_moves, possible_captures] = \
-        check_possible_moves(current_position)
-
-        moving_piece = self.return_piece(current_position)
+        self._clear_possible_moves()
+        piece.check_potential_moves(self.return_squares())
         # Check if this is a capture
-        if new_position in possible_captures:
+        if new_position in piece.possible_captures:
             captured_piece = self.return_piece(new_position)
             # Check if the king is being captured
             if captured_piece.piece_type == KING:
@@ -740,62 +735,61 @@ class Game():
                              captured_piece.color,
                              captured_piece.piece_type,
                              new_position)
-                captured_piece.button.destroy()
-                del captured_piece
+            self.remove_piece(new_position)
 
         # Change the moving piece's location
         logging.info("Moving the %s %s from %s to %s",
-                     moving_piece.color,
-                     moving_piece.piece_type,
-                     current_position,
+                     piece.color,
+                     piece.piece_type,
+                     piece.position,
                      new_position)
-        moving_piece.update_position(new_position)
+        piece.update_position(new_position)
 
         # Check if the previous move deserves a promotion
-        if moving_piece.piece_type == PAWN:
-            if moving_piece.color == WHITE and new_position[0] == "8":
+        if piece.piece_type == PAWN:
+            if piece.color == WHITE and new_position[0] == "8":
                 logging.info("The %s %s at position %s is up for promotion" %
                              (WHITE, PAWN, new_position))
-                promotion(new_position)
-            elif moving_piece.color == BLACK and new_position[0] == "1":
+                #promotion(new_position)
+            elif piece.color == BLACK and new_position[0] == "1":
                 logging.info("The %s %s at position %s is up for promotion" %
                              (BLACK, PAWN, new_position))
-                promotion(new_position)
+                #promotion(new_position)
 
         # Check if the previous move was an En Passent or Castle
-        if new_position in possible_special_moves:
+        if new_position in piece.possible_special_moves:
             # If it was a En Passent then capture the appropriate pawn
-            if moving_piece.piece_type == PAWN:
-                if new_position not in possible_captures:
+            if piece.piece_type == PAWN:
+                if new_position not in piece.possible_captures:
                     # Determine the position of the pawn being captured
                     new_row = int(new_position[0])
                     capture_column = new_position[1]
-                    if moving_piece.color == WHITE:
+                    if piece.color == WHITE:
                         capture_row = new_row - 1
-                    elif moving_piece.color == BLACK:
+                    elif piece.color == BLACK:
                         capture_row = new_row + 1
                     capture_position = str(capture_row) + capture_column
-                    # TODO: Remove the piece at capture_position
+                    self.remove_piece(capture_position)
 
             # If it was a Castle then move the appropriate rook
-            if moving_piece.piece_type == KING:
+            if piece.piece_type == KING:
                 # Figure out if the castle was a queen side or king side
-                if new_position[1] == "c":
-                    if moving_piece.color == WHITE:
-                        current_rook_position = "1a"
-                        new_rook_position = "1d"
-                    elif moving_piece.color == BLACK:
-                        current_rook_position = "8a"
-                        new_rook_position = "8d"
+                if new_position[1] == 'c':
+                    if piece.color == WHITE:
+                        current_rook_position = '1a'
+                        new_rook_position = '1d'
+                    elif piece.color == BLACK:
+                        current_rook_position = '8a'
+                        new_rook_position = '8d'
                     rook_piece = self.return_piece(current_rook_position)
                     rook_piece.update_position(new_rook_position)
-                elif new_position[1] == "g":
-                    if moving_piece.color == WHITE:
-                        current_rook_position = "1h"
-                        new_rook_position = "1f"
-                    elif moving_piece.color == BLACK:
-                        current_rook_position = "8h"
-                        new_rook_position = "8f"
+                elif new_position[1] == 'g':
+                    if piece.color == WHITE:
+                        current_rook_position = '1h'
+                        new_rook_position = '1f'
+                    elif piece.color == BLACK:
+                        current_rook_position = '8h'
+                        new_rook_position = '8f'
                     rook_piece = self.return_piece(current_rook_position)
                     rook_piece.update_position(new_rook_position)
 
@@ -803,8 +797,8 @@ class Game():
         self.last_moved_piece = new_position
 
         # See if the move was a pawn jumping
-        if moving_piece.piece_type == PAWN:
-            if abs(int(current_position[0]) - int(new_position[0])) == 2:
+        if piece.piece_type == PAWN:
+            if abs(int(piece.position[0]) - int(new_position[0])) == 2:
                 self.last_move_was_pawn_jump = new_position
             else:
                 self.last_move_was_pawn_jump = None
@@ -812,8 +806,8 @@ class Game():
             self.last_move_was_pawn_jump = None
 
         # See if the piece has previously been moved and set flag
-        if not moving_piece.has_been_moved:
-            moving_piece.has_been_moved = True
+        if not piece.has_been_moved:
+            piece.has_been_moved = True
 
 
 class BoardDisplay():
@@ -864,6 +858,112 @@ class BoardDisplay():
                         square.place(x=x_pos, y=y_pos, height=size, width=size)
 
 
+class PromotionDisplay():
+    def __init__(self):
+        # Display and instance variables
+        self.root = None
+        self.chosen_piece = None
+        # Initialization methods
+        self._create_display_geometry()
+        self._add_widgets()
+
+    def _create_display_geometry(self):
+        """Creates the promotion piece choice display"""
+        self.root = Toplevel()
+        self.root.title("Pawn Promotion!")
+        display_width = 425
+        display_height = 150
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        display_x_pos = 2*screen_width/3 - display_width/2
+        display_y_pos = screen_height*0.20 - display_height/2
+        self.root.geometry('%dx%d+%d+%d' % (display_width,
+                                            display_height,
+                                            display_x_pos,
+                                            display_y_pos))
+        
+    def _add_widgets(self):
+        """Adds the widgets to the promotion display"""
+        piece_choice_text = """Please choose the piece you would like to
+                            replace the pawn"""
+        piece_choice_prompt = Label(self.root, text=piece_choice_text,
+                                    bg='white', fg='black')
+        piece_choice_prompt.place(x=0, y=0, height=50, width=425)
+        
+        # Add the piece choice buttons
+        queen_button = Button(self.root, text='Queen',
+                              bg='green', fg='white', cursor='hand2')
+        queen_button.bind('<ButtonRelease-1>', lambda arg1=QUEEN: self._set_piece_choice(arg1))
+        queen_button.place(x=45, y=75, height=50, width=50)
+
+        knight_button = Button(self.root, text='Knight',
+                               bg='green', fg='white', cursor='hand2')
+        knight_button.place(x=140, y=75, height=50, width=50)
+        knight_button.bind('<ButtonRelease-1>', lambda arg1=KNIGHT: self._set_piece_choice(arg1))
+
+        rook_button = Button(self.root, text='Rook',
+                             bg='green', fg='white', cursor='hand2')
+        rook_button.place(x=235, y=75, height=50, width=50)
+        rook_button.bind('<ButtonRelease-1>', lambda arg1=ROOK: self._set_piece_choice(arg1))
+
+        bishop_button = Button(self.root, text='Bishop',
+                               bg='green', fg='white', cursor='hand2')
+        bishop_button.place(x=330, y=75, height=50, width=50)
+        bishop_button.bind('<ButtonRelease-1>', lambda arg1=BISHOP: self._set_piece_choice(arg1))
+
+    def _set_piece_choice(self, event, piece_type):
+        """Saves the promotion piece choice"""
+        logging.info("The piece chosen for promotion was a %s", piece_type)
+        self.chosen_piece = piece_type
+
+
+class TurnDisplay():
+    def __init__(self):
+     # Display and instance variables
+        self.root = None
+        self.chosen_piece = None
+        self._turn_label = None
+        self._is_white_turn = True
+        self._white_turn_text = "White, it's your turn!"
+        self._black_turn_text = "Black, it's your turn!"
+        # Initialization methods
+        self._create_display_geometry()
+
+    def _create_display_geometry(self):
+        """Creates the Tkinter display"""
+        self.root = Toplevel()
+        self.root.title('Turn Display')
+        display_width = 250
+        display_height = 100
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        display_x_pos = 2*screen_width/3 - display_width/2
+        display_y_pos = screen_height*0.45 - display_height/2
+        self.root.geometry('%dx%d+%d+%d' % (display_width,
+                                            display_height,
+                                            display_x_pos,
+                                            display_y_pos))
+        self._turn_label = Label(self.root, text=self._white_turn_text, 
+                                 bg="white", fg="black")
+        self._turn_label.place(x=0, y=0, height=100, width=250)
+
+    def toggle_turn_display(self):
+        """Toggles the turn display"""
+        if self._is_white_turn:
+            self._turn_label.configure(text=self._white_turn_text,
+                                       bg='white', fg='black')
+            self._is_white_turn = False
+        else:
+            self._turn_label.configure(text=self._black_turn_text,
+                                       bg='black', fg='white')
+            self._is_white_turn = True
+
+    def show_game_over_display(self, winner):
+        """Updates the display to show the game over text"""
+        game_over_text = "Game over! " + winner + " wins!"
+        self._turn_label.configure(text=game_over_text,
+                                   bg='orange', fg='black')
+
 def promotion_back_end(chosen_piece, piece_position):
     """Completes the back end managing after a pawn promotion"""
     # Then complete the promotion
@@ -904,82 +1004,6 @@ def check_for_check():
                                   piece_names[KING],
                                   capture))
                     return True
-
-def check_possible_moves(current_position):
-    """Checks possible moves based on the piece located at the
-    passed position"""
-    piece = squares[current_position].piece_type
-    possible_moves = []
-    possible_special_moves = []
-    possible_captures = []
-    if piece == KING or piece == PAWN:
-        [possible_moves, possible_special_moves, possible_captures] = \
-        squares[current_position].potential_moves(current_position)
-    elif piece == BISHOP or piece == KNIGHT or piece == QUEEN or piece == ROOK:
-        [possible_moves, possible_captures] = \
-        squares[current_position].potential_moves(current_position)
-
-    moves_str = " ".join(possible_moves) + " ".join(possible_special_moves)
-    captures_str = " ".join(possible_captures)
-    logging.info("The possible moves for the %s %s at position %s are: %s" %
-                 (squares[current_position].color,
-                  piece_names[squares[current_position].piece_type],
-                  current_position,
-                  moves_str))
-    logging.info("The possible captures for the %s %s at position %s are: %s" %
-                 (squares[current_position].color,
-                  piece_names[squares[current_position].piece_type],
-                  current_position,
-                  captures_str))
-
-    return(possible_moves, possible_special_moves, possible_captures)
-
-def promotion(piece_position):
-    """Creates the pawn promotion display the user will use to pick a piece"""
-    # Create the frame with buttons that the user will use to pick
-    # a piece during promotion
-    logging.debug("Creating the promotion choice frame with piece buttons")
-    global piece_choice
-    piece_choice = Tk()
-    w3 = 425
-    h3 = 150
-    x3 = 2*ws/3 - w3/2
-    y3 = hs*0.20 - h3/2
-    piece_choice.geometry('%dx%d+%d+%d' % (w3, h3, x3, y3))
-    piece_choice.title("Pawn Promotion!")
-    piece_choice_frame = Frame(piece_choice, width=w3, height=h3)
-    piece_choice_frame.pack()
-    piece_choice_text = """Please choose the piece you would like to replace
-                        the pawn"""
-    piece_choice_prompt = Label(piece_choice_frame, text=piece_choice_text,
-                                bg="white", fg="black")
-    piece_choice_prompt.place(x=0, y=0, height=50, width=425)
-
-    # Create the potential piece choice buttons
-    q_button = Button(piece_choice_frame, text="Q", bg="green", fg="white")
-    q_button['command'] = lambda arg1="Q", arg2=piece_position: \
-                          promotion_button_choice(arg1, arg2)
-    q_button.place(x=45, y=75, height=50, width=50)
-    k_button = Button(piece_choice_frame, text="k", bg="green", fg="white")
-    k_button['command'] = lambda arg1="k", arg2=piece_position: \
-                          promotion_button_choice(arg1, arg2)
-    k_button.place(x=140, y=75, height=50, width=50)
-    r_button = Button(piece_choice_frame, text="R", bg="green", fg="white")
-    r_button['command'] = lambda arg1="R", arg2=piece_position: \
-                          promotion_button_choice(arg1, arg2)
-    r_button.place(x=235, y=75, height=50, width=50)
-    b_button = Button(piece_choice_frame, text="B", bg="green", fg="white")
-    b_button['command'] = lambda arg1="B", arg2=piece_position: \
-                          promotion_button_choice(arg1, arg2)
-    b_button.place(x=330, y=75, height=50, width=50)
-
-def promotion_button_choice(passed_piece, piece_position):
-    """Completes the book-keeping after a pawn promotion"""
-    # Change the piece in the back end and reset displays
-    logging.info("The piece chosen for promotion was a %s" %
-                 (piece_names[passed_piece]))
-    promotion_back_end(passed_piece, piece_position)
-    piece_choice.destroy()
 
 
 def main():
