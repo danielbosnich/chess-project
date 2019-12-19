@@ -556,6 +556,7 @@ class Rook(ChessPiece):
 
 
 class Game():
+    """Class that represents a running of the game"""
     def __init__(self):
         # Instance variables
         self._display = BoardDisplay()
@@ -591,8 +592,8 @@ class Game():
             elif column == 'e': # King starting point
                 piece = King(WHITE, square_name, self._display.root)
             piece.button.bind('<ButtonRelease-1>',
-                              lambda event, arg1=piece, arg2=square_name:
-                              self._display_possible_moves(event, arg1, arg2))
+                              lambda event, arg1=piece:
+                              self._display_possible_moves(event, arg1))
             self._pieces.append(piece)
 
         # Then add the white pawns
@@ -600,8 +601,8 @@ class Game():
             square_name = str(2) + column
             piece = Pawn(WHITE, square_name, self._display.root)
             piece.button.bind('<ButtonRelease-1>',
-                              lambda event, arg1=piece, arg2=square_name:
-                              self._display_possible_moves(event, arg1, arg2))
+                              lambda event, arg1=piece:
+                              self._display_possible_moves(event, arg1))
             self._pieces.append(piece)
 
         # Add the main black pieces
@@ -618,36 +619,43 @@ class Game():
             elif column == 'e': # King starting point
                 piece = King(BLACK, square_name, self._display.root)
             piece.button.bind('<ButtonRelease-1>',
-                              lambda event, arg1=piece, arg2=square_name:
-                              self._display_possible_moves(event, arg1, arg2))
+                              lambda event, arg1=piece:
+                              self._display_possible_moves(event, arg1))
             self._pieces.append(piece)
         # Then add the black pawns
         for column in COLUMNS:
             square_name = str(7) + column
             piece = Pawn(BLACK, square_name, self._display.root)
             piece.button.bind('<ButtonRelease-1>',
-                              lambda event, arg1=piece, arg2=square_name:
-                              self._display_possible_moves(event, arg1, arg2))
+                              lambda event, arg1=piece:
+                              self._display_possible_moves(event, arg1))
             self._pieces.append(piece)
 
-    def _display_possible_moves(self, event, piece, current_position):
+    def _display_possible_moves(self, event, piece):
         """Displays all possible moves for the piece in a given position"""
+        # Don't show moves if it's not their turn
+        if piece.color != self._turn_color:
+            self._clear_possible_moves()
+            return
+
         # Show potential moves for a given square
-        if current_position != self._previous_position_shown:
+        if piece.position != self._previous_position_shown:
+            logging.info("Showing moves")
             if self._possible_move_buttons:
                 self._clear_possible_moves()
             # Check potential moves for the piece
-            piece.check_potential_moves(self.return_squares())
+            piece.check_potential_moves(self._return_squares())
             for position in piece.possible_captures:
                 self._create_move_button(piece, position, 'Red')
             for position in piece.possible_moves:
                 self._create_move_button(piece, position, 'Blue')
             for position in piece.possible_special_moves:
                 self._create_move_button(piece, position, 'Blue')
-            self._previous_position_shown = current_position
+            self._previous_position_shown = piece.position
 
         # Stop showing the potential moves for a given square
         else:
+            logging.info("Clearing moves")
             logging.debug("Removing the potential moves from the board")
             self._clear_possible_moves()
             self._previous_position_shown = None
@@ -670,14 +678,15 @@ class Game():
                      height=BUTTON_SIZE, width=BUTTON_SIZE)
         self._possible_move_buttons.append(button)
 
-    def is_piece_present(self, position):
+    def _is_piece_present(self, position):
+        # TODO: Figure out if this is necessary
         """Checks if there is a piece at the passed position"""
         for piece in self._pieces:
             if piece.position == position:
                 return True
         return False
 
-    def remove_piece(self, position):
+    def _remove_piece(self, position):
         """Removes the piece at the passed position"""
         to_remove = None
         for piece in self._pieces:
@@ -695,7 +704,7 @@ class Game():
                 return piece
         return None
 
-    def return_squares(self):
+    def _return_squares(self):
         """Returns a dictionary of square positions and their corresponding
         chess piece (or None if there is no piece)"""
         squares = {}
@@ -707,7 +716,7 @@ class Game():
             squares[piece.position] = piece
         return squares
 
-    def show_game_over(self):
+    def _show_game_over(self):
         """Changes the displays if the game is over"""
         # Add the pieces but only with lables instead of buttons
         for piece in self._pieces:
@@ -719,7 +728,7 @@ class Game():
         """Moves the chess piece to a new position and checks some conditions
         after the move"""
         self._clear_possible_moves()
-        piece.check_potential_moves(self.return_squares())
+        piece.check_potential_moves(self._return_squares())
         # Check if this is a capture
         if new_position in piece.possible_captures:
             captured_piece = self.return_piece(new_position)
@@ -735,7 +744,7 @@ class Game():
                              captured_piece.color,
                              captured_piece.piece_type,
                              new_position)
-            self.remove_piece(new_position)
+            self._remove_piece(new_position)
 
         # Change the moving piece's location
         logging.info("Moving the %s %s from %s to %s",
@@ -748,13 +757,13 @@ class Game():
         # Check if the previous move deserves a promotion
         if piece.piece_type == PAWN:
             if piece.color == WHITE and new_position[0] == "8":
-                logging.info("The %s %s at position %s is up for promotion" %
-                             (WHITE, PAWN, new_position))
-                #promotion(new_position)
+                logging.info("The %s %s at position %s is up for promotion",
+                             WHITE, PAWN, new_position)
+                self.promotion(piece)
             elif piece.color == BLACK and new_position[0] == "1":
-                logging.info("The %s %s at position %s is up for promotion" %
-                             (BLACK, PAWN, new_position))
-                #promotion(new_position)
+                logging.info("The %s %s at position %s is up for promotion",
+                             BLACK, PAWN, new_position)
+                self.promotion(piece)
 
         # Check if the previous move was an En Passent or Castle
         if new_position in piece.possible_special_moves:
@@ -769,7 +778,7 @@ class Game():
                     elif piece.color == BLACK:
                         capture_row = new_row + 1
                     capture_position = str(capture_row) + capture_column
-                    self.remove_piece(capture_position)
+                    self._remove_piece(capture_position)
 
             # If it was a Castle then move the appropriate rook
             if piece.piece_type == KING:
@@ -809,8 +818,61 @@ class Game():
         if not piece.has_been_moved:
             piece.has_been_moved = True
 
+        # Update the turn flag
+        if self._turn_color == WHITE:
+            self._turn_color = BLACK
+        else:
+            self._turn_color = WHITE
+
+    def promotion(self, piece):
+        """Completes pawn promotion by creating a promotion """
+        self._promotion_display = PromotionDisplay()
+        # Wait for the user input
+        logging.info("Waiting")
+        self._promotion_display.root.mainloop() # TODO: FIgure out why this isn't returning
+        logging.info("Finished waiting")
+        # If the user closed the window without choosing a piece then just
+        # leave the pawn
+        if self._promotion_display.chosen_piece is None:
+            logging.info("No piece was chosen, leaving the pawn")
+            return
+        # Otherwise, change the piece out with the selected type
+        chosen_piece = self._promotion_display.chosen_piece
+        logging.info(chosen_piece)
+        if chosen_piece == QUEEN:
+            logging.info("HERE")
+            new_piece = Queen(piece.color, piece.position, self._display.root)
+        elif chosen_piece == KNIGHT:
+            new_piece = Knight(piece.color, piece.position, self._display.root)
+        elif chosen_piece == ROOK:
+            new_piece = Rook(piece.color, piece.position, self._display.root)
+        elif chosen_piece == BISHOP:
+            new_piece = BISHOP(piece.color, piece.position, self._display.root)
+        # Remove the pawn and add the new piece
+        self._remove_piece(piece)
+        new_piece.button.bind('<ButtonRelease-1>',
+                              lambda event, arg1=piece:
+                              self._display_possible_moves(event, arg1))
+        self._pieces.append(new_piece)
+
+    def check_for_check(self):
+        """Determines if the player is currently in check"""
+        logging.debug("Determing if the player is in check")
+        squares = self._return_squares()
+        for piece in self._pieces:
+            piece.check_potential_moves()
+            for move in piece.potential_captures:
+                if squares[move].piece_type == KING:
+                    logging.info("The %s %s at position %s is in check!",
+                                 squares[move].color,
+                                 KING,
+                                 move)
+                    return True
+        return False
+
 
 class BoardDisplay():
+    """Class that implements the Tkinter display of the chess board"""
     def __init__(self):
         # Display
         self.root = None
@@ -859,6 +921,7 @@ class BoardDisplay():
 
 
 class PromotionDisplay():
+    """Class that implements the Tkinter display for the promotion choice"""
     def __init__(self):
         # Display and instance variables
         self.root = None
@@ -881,7 +944,7 @@ class PromotionDisplay():
                                             display_height,
                                             display_x_pos,
                                             display_y_pos))
-        
+
     def _add_widgets(self):
         """Adds the widgets to the promotion display"""
         piece_choice_text = """Please choose the piece you would like to
@@ -889,35 +952,45 @@ class PromotionDisplay():
         piece_choice_prompt = Label(self.root, text=piece_choice_text,
                                     bg='white', fg='black')
         piece_choice_prompt.place(x=0, y=0, height=50, width=425)
-        
+
         # Add the piece choice buttons
         queen_button = Button(self.root, text='Queen',
                               bg='green', fg='white', cursor='hand2')
-        queen_button.bind('<ButtonRelease-1>', lambda arg1=QUEEN: self._set_piece_choice(arg1))
+        queen_button.bind('<ButtonRelease-1>',
+                          lambda event, arg1=QUEEN:
+                          self._set_piece_choice(event, arg1))
         queen_button.place(x=45, y=75, height=50, width=50)
 
         knight_button = Button(self.root, text='Knight',
                                bg='green', fg='white', cursor='hand2')
         knight_button.place(x=140, y=75, height=50, width=50)
-        knight_button.bind('<ButtonRelease-1>', lambda arg1=KNIGHT: self._set_piece_choice(arg1))
+        knight_button.bind('<ButtonRelease-1>',
+                           lambda event, arg1=KNIGHT:
+                           self._set_piece_choice(event, arg1))
 
         rook_button = Button(self.root, text='Rook',
                              bg='green', fg='white', cursor='hand2')
         rook_button.place(x=235, y=75, height=50, width=50)
-        rook_button.bind('<ButtonRelease-1>', lambda arg1=ROOK: self._set_piece_choice(arg1))
+        rook_button.bind('<ButtonRelease-1>',
+                         lambda event, arg1=ROOK:
+                         self._set_piece_choice(event, arg1))
 
         bishop_button = Button(self.root, text='Bishop',
                                bg='green', fg='white', cursor='hand2')
         bishop_button.place(x=330, y=75, height=50, width=50)
-        bishop_button.bind('<ButtonRelease-1>', lambda arg1=BISHOP: self._set_piece_choice(arg1))
+        bishop_button.bind('<ButtonRelease-1>',
+                           lambda event, arg1=BISHOP:
+                           self._set_piece_choice(event, arg1))
 
     def _set_piece_choice(self, event, piece_type):
         """Saves the promotion piece choice"""
         logging.info("The piece chosen for promotion was a %s", piece_type)
         self.chosen_piece = piece_type
+        self.root.destroy()
 
 
 class TurnDisplay():
+    """Class that implements the Tkinter turn display"""
     def __init__(self):
      # Display and instance variables
         self.root = None
@@ -943,7 +1016,7 @@ class TurnDisplay():
                                             display_height,
                                             display_x_pos,
                                             display_y_pos))
-        self._turn_label = Label(self.root, text=self._white_turn_text, 
+        self._turn_label = Label(self.root, text=self._white_turn_text,
                                  bg="white", fg="black")
         self._turn_label.place(x=0, y=0, height=100, width=250)
 
@@ -963,47 +1036,6 @@ class TurnDisplay():
         game_over_text = "Game over! " + winner + " wins!"
         self._turn_label.configure(text=game_over_text,
                                    bg='orange', fg='black')
-
-def promotion_back_end(chosen_piece, piece_position):
-    """Completes the back end managing after a pawn promotion"""
-    # Then complete the promotion
-    logging.debug("Completing the final step of the pawn promotion")
-    if squares[piece_position].piece_type == PAWN:
-        if (squares[piece_position].color == WHITE and
-                piece_position[0] == '8'):
-            logging.info("Promotion the %s at position %s to a %s" %
-                         (piece_names[PAWN],
-                          piece_position,
-                          piece_names[chosen_piece]))
-            squares[piece_position] = None
-            add_piece(chosen_piece, WHITE, piece_position)
-        elif (squares[piece_position].color == BLACK and
-              piece_position[0] == '1'):
-            logging.info("Promotion the %s at position %s to a %s" %
-                         (piece_names[PAWN],
-                          piece_position,
-                          piece_names[chosen_piece]))
-            squares[piece_position] = None
-            add_piece(chosen_piece, BLACK, piece_position)
-    else:
-        print("Too late for promotion, another move has already happened")
-
-def check_for_check():
-    """Determines if the player is currently in check"""
-    logging.debug("Determing if the player is in check")
-    for position in squares:
-        # Go through all the opponents pieces and see if they could
-        # capture the king
-        if squares[position] and squares[position].color != turn_color:
-            [possibles_moves, possible_special_moves, possible_captures] = \
-            check_possible_moves(position)
-            for capture in possible_captures:
-                if squares[capture].piece_type == KING:
-                    logging.info("The %s %s at position %s is in check!" %
-                                 (squares[capture].color,
-                                  piece_names[KING],
-                                  capture))
-                    return True
 
 
 def main():
