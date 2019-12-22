@@ -70,7 +70,7 @@ class ChessPiece():
         self.button.place(x=tile_positions[self.position].x,
                           y=tile_positions[self.position].y)
 
-    def disable_button(self, position, frame):
+    def disable_button(self, frame):
         """Disables the button by changing it to a label"""
         self.button.destroy()
         self.button = Label(frame,
@@ -150,7 +150,7 @@ class King(ChessPiece):
         super().__init__(color, position, frame, 'King')
         self.steps = [-1, 0, 1]
 
-    def potential_moves(self, squares):
+    def check_potential_moves(self, squares):
         """Sets all potential moves and captures for a king"""
         current_row = int(self.position[0])
         current_column = letter_to_index(self.position[1])
@@ -565,7 +565,7 @@ class Game():
         self._pieces = []
         self._possible_move_buttons = []
         self._game_over = False
-        self._turn_color = WHITE
+        self._turn_color = WHITE # TODO: Do I need this?
         self._last_moved_piece = None
         self._last_move_was_pawn_jump = None
         self._previous_position_shown = None
@@ -634,6 +634,8 @@ class Game():
     def _display_possible_moves(self, event, piece):
         """Displays all possible moves for the piece in a given position"""
         # Don't show moves if it's not their turn
+        logging.info('Showing possible moves for the %s %s at %s',
+                     piece.color, piece.piece_type, piece.position)
         if piece.color != self._turn_color:
             self._clear_possible_moves()
             return
@@ -678,24 +680,13 @@ class Game():
                      height=BUTTON_SIZE, width=BUTTON_SIZE)
         self._possible_move_buttons.append(button)
 
-    def _is_piece_present(self, position):
-        # TODO: Figure out if this is necessary
-        """Checks if there is a piece at the passed position"""
-        for piece in self._pieces:
-            if piece.position == position:
-                return True
-        return False
-
-    def _remove_piece(self, position):
-        """Removes the piece at the passed position"""
-        to_remove = None
-        for piece in self._pieces:
-            if piece.position == position:
-                to_remove = piece
-                break
-        to_remove.button.destroy()
-        self._pieces.remove(to_remove)
-        del to_remove
+    def _remove_piece(self, piece):
+        """Removes the passed piece"""
+        logging.info('Removing the %s %s at %s',
+                 piece.color, piece.piece_type, piece.position)
+        piece.button.destroy()
+        self._pieces.remove(piece)
+        del piece
 
     def return_piece(self, position):
         """Returns the chess piece object from the passed position"""
@@ -716,13 +707,13 @@ class Game():
             squares[piece.position] = piece
         return squares
 
-    def _show_game_over(self):
+    def _show_game_over(self, winning_color):
         """Changes the displays if the game is over"""
         # Add the pieces but only with lables instead of buttons
         for piece in self._pieces:
-            piece.disable_button()
+            piece.disable_button(self._display.root)
 
-        self._turn_display.show_game_over_display(self, WHITE)
+        self._turn_display.show_game_over_display(winning_color)
 
     def _move_piece(self, event, piece, new_position):
         """Moves the chess piece to a new position and checks some conditions
@@ -730,21 +721,15 @@ class Game():
         self._clear_possible_moves()
         piece.check_potential_moves(self._return_squares())
         # Check if this is a capture
+        captured_piece = None
         if new_position in piece.possible_captures:
             captured_piece = self.return_piece(new_position)
-            # Check if the king is being captured
-            if captured_piece.piece_type == KING:
-                # Change the flag to indicate the game is over
-                logging.info("The %s king has just been captured. The game is over.",
-                             captured_piece.color)
-                self.game_over = True
-            else:
-                # Remove the piece being captured
-                logging.info("The %s %s at position %s will be captured!",
-                             captured_piece.color,
-                             captured_piece.piece_type,
-                             new_position)
-            self._remove_piece(new_position)
+            logging.info("The %s %s at position %s will be captured!",
+                         captured_piece.color,
+                         captured_piece.piece_type,
+                         new_position)
+            # Remove the piece being captured
+            self._remove_piece(captured_piece)
 
         # Change the moving piece's location
         logging.info("Moving the %s %s from %s to %s",
@@ -753,6 +738,13 @@ class Game():
                      piece.position,
                      new_position)
         piece.update_position(new_position)
+
+        # Check if the king was captured and, if so, end the game
+        if captured_piece is not None and captured_piece.piece_type == KING:
+            logging.info("The %s king has just been captured. The game is over.",
+                         captured_piece.color)
+            self._show_game_over(piece.color)
+            return
 
         # Check if the previous move deserves a promotion
         if piece.piece_type == PAWN:
@@ -778,7 +770,8 @@ class Game():
                     elif piece.color == BLACK:
                         capture_row = new_row + 1
                     capture_position = str(capture_row) + capture_column
-                    self._remove_piece(capture_position)
+                    captured_piece = self.return_piece(capture_position)
+                    self._remove_piece(captured_piece)
 
             # If it was a Castle then move the appropriate rook
             if piece.piece_type == KING:
@@ -818,18 +811,16 @@ class Game():
         if not piece.has_been_moved:
             piece.has_been_moved = True
 
-        # Update the turn flag
-        if self._turn_color == WHITE:
-            self._turn_color = BLACK
-        else:
-            self._turn_color = WHITE
+        # Update the turn color flag and display
+        # Pass a boolean for whether the opponent is now in check or not
+        self._update_turn_color(self._check_for_check())
 
     def promotion(self, piece):
         """Completes pawn promotion by creating a promotion """
         self._promotion_display = PromotionDisplay()
         # Wait for the user input
         logging.info("Waiting")
-        self._promotion_display.root.mainloop() # TODO: FIgure out why this isn't returning
+        self._display.root.wait_window(self._promotion_display.root)
         logging.info("Finished waiting")
         # If the user closed the window without choosing a piece then just
         # leave the pawn
@@ -851,17 +842,26 @@ class Game():
         # Remove the pawn and add the new piece
         self._remove_piece(piece)
         new_piece.button.bind('<ButtonRelease-1>',
-                              lambda event, arg1=piece:
+                              lambda event, arg1=new_piece:
                               self._display_possible_moves(event, arg1))
         self._pieces.append(new_piece)
 
-    def check_for_check(self):
+    def _update_turn_color(self, in_check):
+        """Updates the turn color display and instance variable"""
+        if self._turn_color == WHITE:
+            self._turn_color = BLACK
+        else:
+            self._turn_color = WHITE
+        self._turn_display.update_turn_display(self._turn_color, in_check)
+
+    def _check_for_check(self):
         """Determines if the player is currently in check"""
-        logging.debug("Determing if the player is in check")
+        logging.debug('Determing if the player is in check')
         squares = self._return_squares()
+        # TODO: Only look at opponent pieces here (generate a sub-set list)
         for piece in self._pieces:
-            piece.check_potential_moves()
-            for move in piece.potential_captures:
+            piece.check_potential_moves(squares)
+            for move in piece.possible_captures:
                 if squares[move].piece_type == KING:
                     logging.info("The %s %s at position %s is in check!",
                                  squares[move].color,
@@ -996,9 +996,6 @@ class TurnDisplay():
         self.root = None
         self.chosen_piece = None
         self._turn_label = None
-        self._is_white_turn = True
-        self._white_turn_text = "White, it's your turn!"
-        self._black_turn_text = "Black, it's your turn!"
         # Initialization methods
         self._create_display_geometry()
 
@@ -1016,20 +1013,27 @@ class TurnDisplay():
                                             display_height,
                                             display_x_pos,
                                             display_y_pos))
-        self._turn_label = Label(self.root, text=self._white_turn_text,
-                                 bg="white", fg="black")
+        self._turn_label = Label(self.root, text="White, it's your turn!",
+                                 bg="white", fg="black", font='Helvetica 11')
         self._turn_label.place(x=0, y=0, height=100, width=250)
 
-    def toggle_turn_display(self):
+    def update_turn_display(self, turn_color, in_check=False):
         """Toggles the turn display"""
-        if self._is_white_turn:
-            self._turn_label.configure(text=self._white_turn_text,
-                                       bg='white', fg='black')
-            self._is_white_turn = False
+        if not in_check:
+            message_text = turn_color + ", it's your turn!"
+            if turn_color == WHITE:
+                display_bg = 'white'
+                display_fg = 'black'
+            else:
+                display_bg = 'black'
+                display_fg = 'white'
         else:
-            self._turn_label.configure(text=self._black_turn_text,
-                                       bg='black', fg='white')
-            self._is_white_turn = True
+            message_text = "Careful " + turn_color + " you're in check!"
+            display_bg = 'red'
+            display_fg = 'white'
+
+        self._turn_label.configure(text=message_text,
+                                   bg=display_bg, fg=display_fg)
 
     def show_game_over_display(self, winner):
         """Updates the display to show the game over text"""
