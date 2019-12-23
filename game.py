@@ -32,7 +32,6 @@ class Game():
         self._promotion_display = None
         self._pieces = []
         self._possible_move_buttons = []
-        self._game_over = False
         self._turn_color = WHITE
         self._last_moved_piece = None
         self._last_move_was_pawn_jump = None
@@ -63,7 +62,6 @@ class Game():
                               lambda event, arg1=piece:
                               self._display_possible_moves(event, arg1))
             self._pieces.append(piece)
-
         # Then add the white pawns
         for column in COLUMNS:
             square_name = str(2) + column
@@ -101,6 +99,7 @@ class Game():
 
     def _display_possible_moves(self, event, piece):
         """Displays all possible moves for the piece in a given position"""
+        logging.debug('Button click event was %s', event)
         # Don't show moves if it's not their turn
         if piece.color != self._turn_color:
             self._clear_possible_moves()
@@ -185,6 +184,7 @@ class Game():
     def _move_piece(self, event, piece, new_position):
         """Moves the chess piece to a new position and checks some conditions
         after the move"""
+        logging.debug('Button click event was %s', event)
         self._clear_possible_moves()
         piece.check_potential_moves(self._return_squares())
         # Check if this is a capture
@@ -263,16 +263,16 @@ class Game():
                     rook_piece.update_position(new_rook_position)
 
         # Set the last moved piece
-        self.last_moved_piece = new_position
+        self._last_moved_piece = new_position
 
         # See if the move was a pawn jumping
         if piece.piece_type == PAWN:
             if abs(int(piece.position[0]) - int(new_position[0])) == 2:
-                self.last_move_was_pawn_jump = new_position
+                self._last_move_was_pawn_jump = new_position
             else:
-                self.last_move_was_pawn_jump = None
+                self._last_move_was_pawn_jump = None
         else:
-            self.last_move_was_pawn_jump = None
+            self._last_move_was_pawn_jump = None
 
         # See if the piece has previously been moved and set flag
         if not piece.has_been_moved:

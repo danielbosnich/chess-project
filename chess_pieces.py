@@ -21,6 +21,7 @@ BUTTON_SIZE = 50
 COLUMNS = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
 ROWS = (1, 2, 3, 4, 5, 6, 7, 8)
 
+
 class ChessPiece():
     """Class for the individual chess pieces"""
     def __init__(self, color, position, frame, piece_type):
@@ -47,16 +48,15 @@ class ChessPiece():
 
     def _create_button(self, frame):
         """Creates the piece button"""
-        logging.debug("Creating a %s %s button at position %s" %
-                      (self.color,
-                       self.piece_type,
-                       self.position))
+        logging.debug('Creating a %s %s button at position %s',
+                      self.color,
+                      self.piece_type,
+                      self.position)
         self.button = Button(frame,
                              text=self.piece_type[0],
                              bg=self.color,
                              fg=text_color[self.color],
                              cursor='hand2')
-        # button['command'] = lambda arg1=position: display_possible_moves(arg1)
         self.button.place(x=tile_positions[self.position].x,
                           y=tile_positions[self.position].y,
                           height=BUTTON_SIZE, width=BUTTON_SIZE)
@@ -315,7 +315,9 @@ class Pawn(ChessPiece):
                 self.possible_moves.append(possible_move)
 
         # Check for an En Passent
-        # TODO: Figure out how to pass lash_move_was_pawn_jump
+        # TODO: Figure out how to pass last_move_was_pawn_jump
+        # Maybe have a separate method for kings and pawns called check_for_special_moves
+        # Call that from game.py and pass the most recent move for the pawn's method
         last_move_was_pawn_jump = False
         if last_move_was_pawn_jump:
             required_column = last_move_was_pawn_jump[1]

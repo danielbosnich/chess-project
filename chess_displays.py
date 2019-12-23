@@ -140,7 +140,7 @@ class PromotionDisplay():
 class TurnDisplay():
     """Class that implements the Tkinter turn display"""
     def __init__(self):
-     # Display and instance variables
+        # Display and instance variables
         self.root = None
         self.chosen_piece = None
         self._turn_label = None
