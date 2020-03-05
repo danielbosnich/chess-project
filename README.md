@@ -1,2 +1,2 @@
 # chess-project
-Personal chess project with a GUI
+Personal chess project with a GUI!
