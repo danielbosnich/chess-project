@@ -48,10 +48,8 @@ class ChessPiece():
 
     def _create_button(self, frame):
         """Creates the piece button"""
-        logging.debug('Creating a %s %s button at position %s',
-                      self.color,
-                      self.piece_type,
-                      self.position)
+        logging.debug(f'Creating a {self.color} {self.piece_type} button at '
+                      f'position {self.position}')
         self.button = Button(frame,
                              text=self.piece_type[0],
                              bg=self.color,
@@ -321,8 +319,8 @@ class Pawn(ChessPiece):
         last_move_was_pawn_jump = False
         if last_move_was_pawn_jump:
             required_column = last_move_was_pawn_jump[1]
-            logging.debug("The required column for the en passent is %s" %
-                          (required_column))
+            logging.debug(f'The required column for the en passent is '
+                          f'{required_column}')
             if self.color == BLACK and current_row == 4:
                 for i in -1, 1:
                     adjusted_column = index_to_letter(current_column + i)
